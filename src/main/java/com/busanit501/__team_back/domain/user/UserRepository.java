@@ -1,18 +1,15 @@
 package com.busanit501.__team_back.domain.user;
 
-import com.busanit501.__team_back.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 
 /**
- * 사용자 Entity 관련 데이터베이스 접근 계층
+ * APIUser 엔티티에 대한 데이터 접근 계층 (Repository)
  */
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<APIUser, String> {
 
-    // [수정사항 적용]: Spring Data JPA의 Query Method - username 중복 검사
-    boolean existsByUsername(String username);
+    // 🚩 JPA 오류 방지를 위해 엔티티의 실제 필드(mid)를 사용하도록 메서드 수정
+    Optional<APIUser> findByMid(String mid);
 
-    // username으로 사용자 정보를 조회하는 메서드 (로그인 시 사용 예정)
-    Optional<User> findByUsername(String username);
+    // findByUsername 메서드는 삭제됨
 }

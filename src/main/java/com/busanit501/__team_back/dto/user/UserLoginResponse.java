@@ -16,7 +16,8 @@ import lombok.NoArgsConstructor;
 public class UserLoginResponse {
 
     // 사용자 정보
-    private Long userId;
+    // 🚩 FIX: APIUser의 mid(ID)가 String이므로, Long에서 String으로 변경
+    private String userId;
     private String username;
     private String email;
 
@@ -26,6 +27,6 @@ public class UserLoginResponse {
     private Long accessTokenExpiresIn;
     private String refreshToken;
 
-    // [수정사항 적용]: 오류 발생 시 메시지를 담기 위한 필드 추가
+    // 오류 발생 시 메시지를 담기 위한 필드
     private String message;
 }
