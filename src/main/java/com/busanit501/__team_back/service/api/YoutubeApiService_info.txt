@@ -1,0 +1,28 @@
+# YoutubeApiService 클래스 설명
+
+`YoutubeApiService`는 음식 이름을 입력받아 YouTube Data API에 레시피를 검색하고, 그 결과를 `List<YoutubeRecipeDTO>` 형태로 반환하는 서비스입니다.
+
+현재는 뼈대만 구현되어 있으며, 향후 실제 API 연동 작업이 필요합니다.
+
+---
+
+## 1. 현재 구조 (뼈대 코드)
+
+-   **클래스:** `YoutubeApiService`
+-   **메서드:** `public List<YoutubeRecipeDTO> searchRecipes(String foodName)`
+-   **현재 동작:**
+    -   메서드가 호출되면, 실제 API를 호출하는 대신 "TODO" 주석을 남기고 비어있는 리스트(`Collections.emptyList()`)를 즉시 반환합니다.
+    -   이는 아직 API 키나 라이브러리 의존성이 추가되지 않은 상태에서도 다른 부분의 코드와 통합하고 컴파일 오류 없이 개발을 진행할 수 있게 합니다.
+
+---
+
+## 2. 향후 작업 (TODO)
+
+`searchRecipes` 메서드를 완성하기 위해 아래 작업들이 필요합니다.
+
+1.  **의존성 추가:** `build.gradle` 파일에 Google API Client Library for Java (YouTube Data API 포함) 의존성을 추가해야 합니다.
+2.  **API 키 설정:** `application.properties` 파일에 발급받은 YouTube API 키를 `youtube.api.key=YOUR_API_KEY` 형식으로 추가해야 합니다.
+3.  **API 호출 로직 구현:**
+    -   설정한 API 키와 `foodName`을 사용하여 YouTube API에 검색 요청을 보냅니다.
+    -   API로부터 받은 JSON 형식의 응답을 파싱합니다.
+    -   파싱한 데이터(영상 제목, 썸네일, ID, 설명 등)를 `YoutubeRecipeDTO` 객체에 담아 리스트 형태로 만들어 반환합니다.

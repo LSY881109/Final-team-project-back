@@ -15,7 +15,7 @@
 ### **2단계: `YoutubeApiService` 구현**
 - [ ] `build.gradle` 파일에 YouTube Data API 의존성 추가 (팀원과 논의)
 - [ ] `application.properties` 파일에 `youtube.api.key` 추가
-- [ ] `YoutubeApiService.java` 서비스 클래스 생성
+- [x] `YoutubeApiService.java` 서비스 클래스 생성
   - `searchRecipes(String foodName)` 메서드를 구현하여 YouTube 영상을 검색하고 `YoutubeRecipeDTO` 리스트를 반환하도록 작성하세요.
   - 추천 위치: `src/main/java/com/busanit501/__team_back/service/api/YoutubeApiService.java`
 
