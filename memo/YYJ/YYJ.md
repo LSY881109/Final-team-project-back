@@ -20,7 +20,7 @@
   - 추천 위치: `src/main/java/com/busanit501/__team_back/service/api/YoutubeApiService.java`
 
 ### **3단계: DTO 설계**
-- [ ] `YoutubeRecipeDTO.java` 생성
+- [x] `YoutubeRecipeDTO.java` 생성
   - 영상 제목, 썸네일 URL, 영상 ID 필드를 포함하세요.
   - 추천 위치: `src/main/java/com/busanit501/__team_back/dto/analysis/YoutubeRecipeDTO.java`
 - [ ] `FoodAnalysisResultDTO.java` 확장 또는 수정 (담당 팀원과 협업)
