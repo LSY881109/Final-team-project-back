@@ -166,11 +166,11 @@ MongoDB 3차 쿼리: 확보한 food_reference_id로 FoodReference에서 최종 �
 데이터베이스 기본 설계 및 관리
 MariaDB: Users, SearchSessions (DB 구현 중심)
 domain/maria/* (DB 모델링 및 리포지토리), SearchSessionService 구현 지원
-유영준
+김무진
 AI 연동 및 대용량 이미지 관리
 MongoDB: ProfileImages, AnalysisResults
 AnalysisController.java, AIAnalysisService.java, domain/mongo/* 모델/리포지토리
-김무진
+유영준
 정적 데이터 및 외부 API 연동
 MongoDB: FoodReference
 YoutubeApiService.java, FoodReference.java 모델/리포지토리, dto/analysis
