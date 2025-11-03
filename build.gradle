@@ -95,6 +95,11 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+
+//    CKM 추가
+//    유효성검사 (아이디에 영어 및 숫자만 사용가능하게)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 }
 
 // ----------------------------------------------------
