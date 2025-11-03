@@ -20,9 +20,9 @@
 
 `searchRecipes` 메서드를 완성하기 위해 아래 작업들이 필요합니다.
 
-1.  **의존성 추가:** `build.gradle` 파일에 Google API Client Library for Java (YouTube Data API 포함) 의존성을 추가해야 합니다.
+1.  **의존성 추가:** `build.gradle` 파일에 Google API Client Library for Java (YouTube Data API 포함) 의존성은 추가되었습니다. (팀원과 `google-api-client` 명시적 추가 여부 논의 완료)
 2.  **API 키 설정:** `application.properties` 파일에 발급받은 YouTube API 키를 `youtube.api.key=YOUR_API_KEY` 형식으로 추가해야 합니다.
 3.  **API 호출 로직 구현:**
     -   설정한 API 키와 `foodName`을 사용하여 YouTube API에 검색 요청을 보냅니다.
     -   API로부터 받은 JSON 형식의 응답을 파싱합니다.
-    -   파싱한 데이터(영상 제목, 썸네일, ID, 설명 등)를 `YoutubeRecipeDTO` 객체에 담아 리스트 형태로 만들어 반환합니다.
+    -   파싱한 데이터(영상 제목, ID 등)를 `YoutubeRecipeDTO` 객체에 담아 리스트 형태로 만들어 반환합니다. (참고: `YoutubeRecipeDTO`는 `title`과 `videoId` 필드만 포함합니다.)
