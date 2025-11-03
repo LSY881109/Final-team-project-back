@@ -41,7 +41,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation' // 유효성 검사
 
-    // Security & JWT (핵심: JwtAuthenticationFilter 문제를 해결하는 라이브러리)
+       // Security & JWT (핵심: JwtAuthenticationFilter 문제를 해결하는 라이브러리)
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
