@@ -1,75 +1,59 @@
 package com.busanit501.__team_back.config;
 
-import com.busanit501.__team_back.security.jwt.JwtAuthenticationFilter;
-import com.busanit501.__team_back.security.jwt.JwtTokenProvider;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * Spring Security 핵심 설정 클래스
- */
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
-@Log4j2
 public class SecurityConfig {
 
-    private final JwtTokenProvider jwtTokenProvider;
-
-    /**
-     * 비밀번호 암호화 빈 등록
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    /**
-     * AuthenticationManager 빈 등록 (AuthService에서 사용)
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    /**
-     * 보안 필터 체인 구성
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // CSRF 비활성화 (Stateless 서버이므로)
+        http.csrf(csrf -> csrf.disable());
 
-        // 1. CSRF, Session 비활성화 및 StateLess 설정
-        http.csrf(AbstractHttpConfigurer::disable);
+        // CORS 설정 (WebConfig에서 설정했다면 여기서도 적용해주는 것이 좋음)
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        // 세션을 사용하지 않도록 설정 (Stateless)
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // 2. 인증이 필요한 요청과 그렇지 않은 요청 설정
+        // API 경로별 접근 권한 설정
         http.authorizeHttpRequests(authorize -> authorize
-                // 회원가입, 로그인 API, Swagger UI는 인증 없이도 접근 허용
-                .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // 나머지 모든 요청은 인증(JWT 토큰)이 필요합니다.
+                // [핵심] '/api/users/signup' 경로는 누구나 접근 가능하도록 허용
+                .requestMatchers("/api/users/signup").permitAll()
+                // TODO: '/api/users/login' 경로도 추가로 허용해야 함
+                // 그 외의 모든 요청은 인증된 사용자만 접근 가능
                 .anyRequest().authenticated()
         );
 
-        // 3. JWT 인증 필터를 UsernamePasswordAuthenticationFilter 이전에 추가
-        http.addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider),
-                UsernamePasswordAuthenticationFilter.class
-        );
-
-        log.info("Spring Security 설정이 JWT 필터와 함께 최종적으로 마무리되었습니다.");
+        // TODO: JWT 필터를 추가하는 로직이 여기에 있을 것입니다.
+        // http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+    // CORS 설정 Bean
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // 프론트엔드 주소
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
+    }
+
+    // TODO: PasswordEncoder Bean을 여기에 등록해야 합니다.
 }
