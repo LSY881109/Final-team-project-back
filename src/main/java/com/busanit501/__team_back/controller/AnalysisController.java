@@ -54,7 +54,7 @@ public class AnalysisController {
 
             // 4. (선택적) MongoDB 등 DB에 분석 요청/결과 기록 로직 추가 가능
 
-            log.info("분석 완료. 인식된 음식: {}", resultDTO.getRecognizedFoodName());
+            log.info("분석 완료. 인식된 음식: {}", resultDTO.getFoodName());
 
             // 5. 성공 응답 반환 (HTTP 200 OK)
             return ResponseEntity.ok(resultDTO);
@@ -66,7 +66,7 @@ public class AnalysisController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     FoodAnalysisResultDTO.builder()
                             .message("이미지 분석 처리 중 서버 오류가 발생했습니다: " + e.getMessage())
-                            .recognizedFoodName("N/A")
+                            .foodName("N/A")
                             .build()
             );
         }

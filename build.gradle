@@ -30,6 +30,10 @@ configurations {
 
 repositories {
     mavenCentral()
+    google()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/releases/"
+    }
 }
 
 dependencies {
@@ -68,8 +72,10 @@ dependencies {
 
     // ----------------------------------------------------
     //YYJ
-    // External APIs
-        implementation 'com.google.apis:google-api-services-youtube:v3-rev20240401-2.0.0'
+    // External APIs - YouTube API v3
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev20231120-2.0.0'
+    implementation 'com.google.api-client:google-api-client:2.2.0'
+    implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
     // ----------------------------------------------------
 
     // API 문서화 (SpringDoc) - 버전 교체 적용
@@ -121,4 +127,4 @@ clean {
 }
 
 // 컴파일 시 clean 실행 설정 유지 (사용자 요청에 따라 유지)
-compileJava.dependsOn('clean')
+//compileJava.dependsOn('clean')
