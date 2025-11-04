@@ -2,7 +2,7 @@ package com.busanit501.__team_back.service.user;
 
 import com.busanit501.__team_back.entity.MongoDB.ProfileImage;
 import com.busanit501.__team_back.repository.mongo.ProfileImageRepository;
-import com.busanit501.__team_back.service.FileService;
+import com.busanit501.__team_back.service.user.FileService;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.Binary;
 import org.springframework.stereotype.Service;
