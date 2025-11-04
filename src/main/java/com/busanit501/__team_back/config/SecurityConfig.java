@@ -18,6 +18,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+import com.busanit501.__team_back.security.oauth.CustomOAuth2UserService;
+import com.busanit501.__team_back.security.oauth.OAuth2LoginSuccessHandler;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -42,6 +45,10 @@ public class SecurityConfig {
 
         // API 경로별 접근 권한 설정
         http.authorizeHttpRequests(authorize -> authorize
+                // [핵심] '/api/users/signup' 경로는 누구나 접근 가능하도록 허용
+                .requestMatchers("/api/users/signup").permitAll()
+                // 추가: 소셜 로그인 및 정적 자원 허용
+                .requestMatchers("/", "/login", "/oauth2/authorization/**", "/css/**", "/js/**", "/images/**").permitAll()
                 // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
                 .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
@@ -49,6 +56,17 @@ public class SecurityConfig {
 
         );
 
+        // 추가: OAuth2 Login 설정 (ApplicationContext에서 Bean 획득, 기존 체이닝 유지)
+        var appCtx = http.getSharedObject(org.springframework.context.ApplicationContext.class);
+        CustomOAuth2UserService customOAuth2UserService = appCtx.getBean(CustomOAuth2UserService.class);
+        OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler = appCtx.getBean(OAuth2LoginSuccessHandler.class);
+        http.oauth2Login(o -> o
+                .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
+                .successHandler(oAuth2LoginSuccessHandler)
+        );
+
+        // TODO: JWT 필터를 추가하는 로직이 여기에 있을 것입니다.
+        // http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         // JWT필터
         http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
