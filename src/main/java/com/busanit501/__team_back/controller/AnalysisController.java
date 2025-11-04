@@ -27,10 +27,31 @@ public class AnalysisController {
 
         log.info("이미지 분석 요청 수신 - 사용자 ID: {}, 파일명: {}", userId, imageFile.getOriginalFilename());
 
+        // 파일 유효성 검증
         if (imageFile.isEmpty()) {
             return ResponseEntity.badRequest().body(
                 FoodAnalysisResultDTO.builder()
                     .message("이미지 파일이 비어있습니다.")
+                    .build()
+            );
+        }
+
+        // 파일 타입 검증 (이미지 파일만 허용)
+        String contentType = imageFile.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body(
+                FoodAnalysisResultDTO.builder()
+                    .message("이미지 파일만 업로드 가능합니다. 현재 파일 타입: " + contentType)
+                    .build()
+            );
+        }
+
+        // 파일 크기 검증 (10MB 제한)
+        long maxSize = 10 * 1024 * 1024; // 10MB
+        if (imageFile.getSize() > maxSize) {
+            return ResponseEntity.badRequest().body(
+                FoodAnalysisResultDTO.builder()
+                    .message("파일 크기가 너무 큽니다. 최대 10MB까지 업로드 가능합니다.")
                     .build()
             );
         }
