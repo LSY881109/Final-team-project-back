@@ -83,6 +83,7 @@ dependencies {
     implementation 'com.google.apis:google-api-services-youtube:v3-rev20241203-2.0.0'
     implementation 'com.google.api-client:google-api-client:2.2.0'
     implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
+    implementation 'com.google.api-client:google-api-client-gson:2.2.0' // GsonFactory 사용을 위한 의존성
     // ----------------------------------------------------
 
     // API 문서화 (SpringDoc) - 버전 교체 적용
