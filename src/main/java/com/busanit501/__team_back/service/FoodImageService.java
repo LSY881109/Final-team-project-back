@@ -2,7 +2,7 @@ package com.busanit501.__team_back.service;
 
 import com.busanit501.__team_back.domain.mongo.FoodImage;
 import com.busanit501.__team_back.dto.FoodImageDTO;
-import com.busanit501.__team_back.repository.FoodImageRepository;
+import com.busanit501.__team_back.repository.mongo.FoodImageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;

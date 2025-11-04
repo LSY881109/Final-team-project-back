@@ -1,4 +1,4 @@
-package com.busanit501.__team_back.repository;
+package com.busanit501.__team_back.repository.mongo;
 
 import com.busanit501.__team_back.domain.mongo.FoodImage;
 import org.springframework.data.mongodb.repository.MongoRepository;

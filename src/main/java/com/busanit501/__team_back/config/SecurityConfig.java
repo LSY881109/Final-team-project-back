@@ -43,9 +43,10 @@ public class SecurityConfig {
         // API 경로별 접근 권한 설정
         http.authorizeHttpRequests(authorize -> authorize
                 // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
-                .requestMatchers("/api/users/signup", "/api/users/login").permitAll()
+                .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
                 .anyRequest().authenticated()
+
         );
 
         // JWT필터
