@@ -111,8 +111,9 @@ dependencies {
 //    CKM 추가
 //    유효성검사 (아이디에 영어 및 숫자만 사용가능하게)
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-
+    // Thumbnailator (이미지 리사이징 라이브러리)
+    implementation 'net.coobird:thumbnailator:0.4.20'
+//==============================================
 }
 
 // ----------------------------------------------------
