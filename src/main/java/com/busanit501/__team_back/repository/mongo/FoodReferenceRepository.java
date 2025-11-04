@@ -7,10 +7,13 @@ import java.util.Optional;
 //관리자가 입력한 표준 영양 정보(`FoodReference`)를 관리할 리포지토리
 public interface FoodReferenceRepository extends MongoRepository<FoodReference, String> {
 
-    // 음식 이름으로 영양 정보를 조회하는 메소드
-    // AI가 음식 이름을 알려주면, 이 메소드를 호출하여 해당 음식의 영양 정보를 찾습니다.
+    /**
+     * 음식 이름으로 FoodReference 문서를 조회합니다.
+     * @param foodName 조회할 음식의 이름
+     * @return Optional<FoodReference> 객체
+     */
     Optional<FoodReference> findByFoodName(String foodName);
-
+    //Optional은 "결과가 있을 수도, 없을 수도 있다"는 것을 의미
 }
 
 //findByFoodName: AI 분석 결과로 나온 음식 이름(예: "파스타")을 이용해

@@ -29,7 +29,15 @@ configurations {
 }
 
 repositories {
-    mavenCentral()
+    mavenCentral()  // Public repository
+    google()        // Public repository
+    maven {        // Custom repository
+        url = uri("https://oss.sonatype.org/content/repositories/releases/")
+    }
+    mavenLocal()   // Local repository
+    flatDir {      // File location
+        dirs "libs"
+    }
 }
 
 dependencies {
@@ -67,6 +75,15 @@ dependencies {
     implementation 'org.modelmapper:modelmapper:3.1.0'
     implementation 'com.google.code.gson:gson:2.11.0'
     implementation 'com.squareup.okhttp3:okhttp:4.11.0' // OkHttp dependency
+
+    // ----------------------------------------------------
+    //YYJ
+    // External APIs - YouTube API v3
+    // Maven Central에서 확인된 실제 존재하는 버전 사용
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev20241203-2.0.0'
+    implementation 'com.google.api-client:google-api-client:2.2.0'
+    implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
+    // ----------------------------------------------------
 
     // API 문서화 (SpringDoc) - 버전 교체 적용
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3'
@@ -127,4 +144,4 @@ clean {
 }
 
 // 컴파일 시 clean 실행 설정 유지 (사용자 요청에 따라 유지)
-compileJava.dependsOn('clean')
+//compileJava.dependsOn('clean')
