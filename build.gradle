@@ -86,6 +86,13 @@ dependencies {
 
     // Google Places API (및 기타 REST API) 호출을 위한 WebClient
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+
+//    CKM 추가
+//    유효성검사 (아이디에 영어 및 숫자만 사용가능하게)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+
 }
 
 // ----------------------------------------------------
