@@ -1,7 +1,9 @@
 package com.busanit501.__team_back.service.user;
+import com.busanit501.__team_back.dto.ai.AiResponse;
 import com.busanit501.__team_back.repository.mongo.AnalysisHistoryRepository;
 import com.busanit501.__team_back.repository.mongo.FoodAnalysisDataRepository;
 import com.busanit501.__team_back.repository.mongo.FoodReferenceRepository;
+import com.busanit501.__team_back.service.ai.AIAnalysisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -14,10 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 @Log4j2
 public class AnalysisServiceImpl implements AnalysisService {
 
-    // 필요한 모든 Repository 주입
     private final FoodAnalysisDataRepository foodAnalysisDataRepository;
     private final AnalysisHistoryRepository analysisHistoryRepository;
     private final FoodReferenceRepository foodReferenceRepository;
+    private final AIAnalysisService aiAnalysisService; // AIAnalysisService 주입
 
     // 외부 API 통신을 위한 컴포넌트 (추후 생성)
     // private final FlaskClient flaskClient;
@@ -29,10 +31,11 @@ public class AnalysisServiceImpl implements AnalysisService {
         log.info("사용자 ID: " + userId);
         log.info("이미지 파일: " + image.getOriginalFilename());
 
-        // [STEP 1] Flask AI 서버로 이미지 전송 및 결과 수신 (가상)
-        // AiResponseDto aiResult = flaskClient.analyze(image);
-        String foodName = "파스타"; // 임시 데이터
-        double accuracy = 0.85; // 임시 데이터
+    try {
+        // [STEP 1] Flask AI 서버로 이미지 전송 및 결과 수신
+        AiResponse aiResult = aiAnalysisService.analyzeImage(image);
+        String foodName = aiResult.getFoodName();
+        double accuracy = aiResult.getAccuracy();
         log.info("AI 분석 결과: " + foodName + " (" + accuracy * 100 + "%)");
 
         // [STEP 2] 인식된 음식 이름으로 FoodReference DB에서 영양 정보 조회
@@ -58,5 +61,11 @@ public class AnalysisServiceImpl implements AnalysisService {
 
         // [STEP 6] 최종 결과를 DTO로 가공하여 반환
         return "분석 완료: " + foodName; // 최종 응답 DTO 반환 예정
+
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("FLASK 서버와 통신 오류발생");
+        }
+
     }
 }

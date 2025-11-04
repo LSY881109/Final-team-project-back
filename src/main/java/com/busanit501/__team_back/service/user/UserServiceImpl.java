@@ -1,11 +1,18 @@
 package com.busanit501.__team_back.service.user;
 
+import com.busanit501.__team_back.dto.user.UserLoginRequest;
 import com.busanit501.__team_back.dto.user.UserSignUpRequest;
 import com.busanit501.__team_back.entity.MariaDB.User;
 import com.busanit501.__team_back.repository.maria.UserRepository;
+import com.busanit501.__team_back.security.jwt.JwtTokenProvider;
+import com.busanit501.__team_back.security.jwt.TokenInfo;
 import com.busanit501.__team_back.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,8 +26,13 @@ import java.io.IOException;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final FileService fileService; // FileService 주입
-    // TODO: private final PasswordEncoder passwordEncoder;
+    private final FileService fileService;
+
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+
 
     @Override
     public void registerUser(UserSignUpRequest signUpRequestDto, MultipartFile profileImage) {
@@ -46,11 +58,9 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        // User 엔티티 생성 및 저장
         User user = User.builder()
                 .userId(signUpRequestDto.getUserId())
-                // .password(passwordEncoder.encode(signUpRequestDto.getPassword())) // TODO: Security 적용 후 활성화
-                .password(signUpRequestDto.getPassword()) // 임시로 평문 저장
+                .password(passwordEncoder.encode(signUpRequestDto.getPassword())) // 암호화 적용
                 .email(signUpRequestDto.getEmail())
                 .profileImageId(profileImageId)
                 .build();
@@ -58,5 +68,26 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         log.info("회원가입 로직 처리 완료: " + user.getUserId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TokenInfo login(UserLoginRequest loginRequest) {
+
+        // 1. Login ID/PW를 기반으로 Authentication 객체 생성
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(loginRequest.getUserId(), loginRequest.getPassword());
+
+        // 2. 실제 검증 (사용자 비밀번호 체크)
+        // authenticate() 메소드가 실행될 때 CustomUserDetailsService의 loadUserByUsername 메소드가 실행됨
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
+        // 3. 인증 정보를 기반으로 JWT 토큰 생성
+        TokenInfo tokenInfo = jwtTokenProvider.generateToken(authentication);
+
+        // Refresh Token을 DB에 저장 할지 말지 선택하면됨.
+        // redisRepository.save(authentication.getName(), tokenInfo.getRefreshToken());
+
+        return tokenInfo;
     }
 }
