@@ -51,6 +51,8 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/oauth2/authorization/**", "/css/**", "/js/**", "/images/**").permitAll()
                 // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
                 .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
+                // 이미지 분석 API는 테스트를 위해 인증 없이 접근 가능하도록 설정
+                .requestMatchers("/api/analysis/**").permitAll()
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
                 .anyRequest().authenticated()
 
