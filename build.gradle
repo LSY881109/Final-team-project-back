@@ -59,6 +59,8 @@ dependencies {
     // 🚩 FIX: runtimeOnly -> implementation으로 변경 (클래스 로드 오류 해결)
     implementation 'org.mariadb.jdbc:mariadb-java-client'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb' // 몽고디비 의존성
+    // OAuth2 Client (Google/Naver 소셜 로그인 추가)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
     // ----------------------------------------------------
     // Utility & Tooling
