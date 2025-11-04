@@ -47,6 +47,8 @@ public class SecurityConfig {
 
                 // 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        // 💡 추가: 지도 검색 API는 인증 없이 접근 가능하도록 허용합니다.
+                        .requestMatchers("/api/map/search").permitAll()
                         // 이미지 업로드 API - 인증 없이 접근 가능 (테스트용)
                         .requestMatchers("/api/food-images/**").permitAll()
                         // 회원가입, 로그인 - 인증 없이 접근 가능
