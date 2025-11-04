@@ -3,6 +3,8 @@ import com.busanit501.__team_back.dto.ai.AiResponse;
 import com.busanit501.__team_back.dto.analysis.FoodAnalysisResultDTO;
 import com.busanit501.__team_back.dto.analysis.NutritionData;
 import com.busanit501.__team_back.dto.analysis.YoutubeRecipeDTO;
+import com.busanit501.__team_back.entity.MongoDB.AnalysisHistory;
+import com.busanit501.__team_back.entity.MongoDB.FoodAnalysisData;
 import com.busanit501.__team_back.entity.MongoDB.FoodReference;
 import com.busanit501.__team_back.repository.mongo.AnalysisHistoryRepository;
 import com.busanit501.__team_back.repository.mongo.FoodAnalysisDataRepository;
@@ -11,14 +13,25 @@ import com.busanit501.__team_back.service.ai.AIAnalysisService;
 import com.busanit501.__team_back.service.api.YoutubeApiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import net.coobird.thumbnailator.Thumbnails;
+import org.bson.types.Binary;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import static net.coobird.thumbnailator.Thumbnailator.createThumbnail;
+
+// 수정된 부분은 주석으로 //으로 표시함.
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -32,6 +45,14 @@ public class AnalysisServiceImpl implements AnalysisService {
     private final YoutubeApiService youtubeApiService;
     private final ModelMapper modelMapper;
 
+//====================================================================
+    // [수정] Flask 모델의 클래스 이름을 우리 시스템의 음식 이름으로 매핑하는 Map 추가
+    private static final Map<String, String> classNameToFoodNameMap = Map.of(
+            "Hammer", "파스타",
+            "Nipper", "감바스"
+    );
+//====================================================================
+
     @Override
     public FoodAnalysisResultDTO analyzeImage(Long userId, MultipartFile image) {
         log.info("AnalysisService - analyzeImage 실행...");
@@ -41,9 +62,17 @@ public class AnalysisServiceImpl implements AnalysisService {
         try {
             // [STEP 1] Flask AI 서버로 이미지 전송 및 결과 수신
             AiResponse aiResult = aiAnalysisService.analyzeImage(image);
-            String foodName = aiResult.getFoodName();
-            Double accuracy = aiResult.getAccuracy();
-            log.info("AI 분석 결과: {} ({}%)", foodName, accuracy * 100);
+
+            //====================================================================
+            String recognizedClassName = aiResult.getPredictedClass(); // "Hammer" 또는 "Nipper"
+            String foodName = classNameToFoodNameMap.getOrDefault(recognizedClassName, "알 수 없는 음식");
+            double accuracy = aiResult.getConfidence() / 100.0; // 0.0 ~ 1.0 사이 값으로 변환
+            log.info("AI 분석 결과: {} -> {} (정확도: {}%)", recognizedClassName, foodName, aiResult.getConfidence());
+            //====================================================================
+
+//            String foodName = aiResult.getFoodName();
+//            Double accuracy = aiResult.getAccuracy();
+//            log.info("AI 분석 결과: {} ({}%)", foodName, accuracy * 100);
 
             // [STEP 2] 인식된 음식 이름으로 FoodReference DB에서 영양 정보 조회 및 DTO 변환
             Optional<FoodReference> foodRefOptional = foodReferenceRepository.findByFoodName(foodName);
@@ -63,17 +92,58 @@ public class AnalysisServiceImpl implements AnalysisService {
             List<YoutubeRecipeDTO> youtubeRecipes = youtubeApiService.searchRecipes(foodName);
             log.info("{} 관련 유튜브 레시피 검색 완료: {}개", foodName, youtubeRecipes.size());
 
+//====================================================================
             // [STEP 4] 원본 이미지를 학습용 DB에 저장 (비동기 처리 고려)
-            // 이 작업은 사용자 응답 시간에 영향을 주지 않도록 @Async 등을 사용하여 비동기적으로 처리하는 것이 좋습니다.
+            // 이 작업은 사용자 응답 시간에 영향을 주지 않도록 @Async 등을
+            // 사용하여 비동기적으로 처리하는 것이 좋음. 우선 동기방식으로 만듦.
             // FoodAnalysisData data = FoodAnalysisData.builder()...
             // foodAnalysisDataRepository.save(data);
-            log.info("학습용 이미지 데이터 저장 완료 (임시)");
+            try {
+                FoodAnalysisData trainingData = FoodAnalysisData.builder()
+                        .foodCategory(foodName) // AI가 분석한 음식 이름으로 카테고리 지정
+                        .originalImageData(new Binary(image.getBytes())) // 원본 이미지 데이터 저장
+                        .contentType(image.getContentType())
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                foodAnalysisDataRepository.save(trainingData);
+                log.info("학습용 원본 이미지 저장 완료. Category: {}", foodName);
+            } catch (IOException e) {
+                log.error("학습용 이미지 저장 실패", e);
+                // 이 작업이 실패하더라도 사용자에게 보내는 최종 분석 결과에는 영향을 주지 않도록
+                // 여기서 예외를 잡아서 처리하고 계속 진행하는 것이 좋습니다.
+            }
+//====================================================================
 
+//====================================================================
             // [STEP 5] 썸네일 생성 및 최종 분석 결과를 AnalysisHistory DB에 저장
-            // byte[] thumbnailData = createThumbnail(image);
-            // AnalysisHistory history = AnalysisHistory.builder()...
-            // analysisHistoryRepository.save(history);
-            log.info("사용자 분석 기록 저장 완료 (임시)");
+            // (1) 리사이징 수행: createThumbnail 헬퍼 메소드를 호출하여
+            //     사용자가 업로드한 원본 이미지(image)를 256x256 크기로 리사이즈합니다.
+            byte[] thumbnailData = createThumbnail(image, 256);
+
+            AnalysisHistory history = AnalysisHistory.builder()
+                    .userId(userId)
+
+                    // (2) DB에 저장: 리사이즈된 이미지 데이터(thumbnailData)를
+                    //     Binary 형태로 변환하여 thumbnailImageData 필드에 담습니다.
+                    .thumbnailImageData(new Binary(thumbnailData))
+                    .thumbnailContentType(image.getContentType())
+                    .recognizedFoodName(foodName)
+                    .accuracy(accuracy) // 0.0 ~ 1.0 사이 값으로 저장
+                    .youtubeRecipes(
+                            // YoutubeRecipeDto 리스트를 AnalysisHistory의 YoutubeRecipe 리스트로 변환
+                            youtubeRecipes.stream()
+                                    .map(dto ->
+                                            modelMapper.map(dto, AnalysisHistory.YoutubeRecipe.class))
+                                    .collect(Collectors.toList())
+                    )
+                    .analysisDate(LocalDateTime.now())
+                    .build();
+
+            // (3) MongoDB에 최종 저장
+            analysisHistoryRepository.save(history);
+            log.info("사용자 분석 기록 저장 완료. History ID: {}", history.getId());
+            //====================================================================
+
 
             // [STEP 6] 조회 및 변환된 모든 데이터를 최종 FoodAnalysisResultDTO에 담아 반환
             return FoodAnalysisResultDTO.builder()
@@ -95,5 +165,14 @@ public class AnalysisServiceImpl implements AnalysisService {
                     .message("분석 중 오류 발생: " + e.getMessage())
                     .build();
         }
+    }
+    // 썸네일 생성을 담당하는 헬퍼(helper) 메소드
+    private byte[] createThumbnail(MultipartFile image, int size) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Thumbnails.of(new ByteArrayInputStream(image.getBytes()))
+                .size(size, size)
+                .outputQuality(0.85)
+                .toOutputStream(outputStream);
+        return outputStream.toByteArray();
     }
 }
