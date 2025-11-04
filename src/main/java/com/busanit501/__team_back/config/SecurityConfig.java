@@ -1,6 +1,7 @@
 package com.busanit501.__team_back.config;
 
 import com.busanit501.__team_back.security.jwt.JwtAuthenticationFilter;
+import com.busanit501.__team_back.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,9 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final JwtTokenProvider jwtTokenProvider;
+
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // CSRF 비활성화 (Stateless 서버이므로)
@@ -40,7 +44,6 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorize -> authorize
                 // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
                 .requestMatchers("/api/users/signup", "/api/users/login").permitAll()
-                // TODO: '/api/users/login' 경로도 추가로 허용해야 함
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
                 .anyRequest().authenticated()
         );
