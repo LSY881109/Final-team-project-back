@@ -6,7 +6,7 @@ import com.busanit501.__team_back.entity.MariaDB.User;
 import com.busanit501.__team_back.repository.maria.UserRepository;
 import com.busanit501.__team_back.security.jwt.JwtTokenProvider;
 import com.busanit501.__team_back.security.jwt.TokenInfo;
-import com.busanit501.__team_back.service.FileService;
+import com.busanit501.__team_back.service.user.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

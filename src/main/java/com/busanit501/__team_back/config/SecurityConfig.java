@@ -50,9 +50,10 @@ public class SecurityConfig {
                 // 추가: 소셜 로그인 및 정적 자원 허용
                 .requestMatchers("/", "/login", "/oauth2/authorization/**", "/css/**", "/js/**", "/images/**").permitAll()
                 // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
-                .requestMatchers("/api/users/signup", "/api/users/login").permitAll()
+                .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
                 .anyRequest().authenticated()
+
         );
 
         // 추가: OAuth2 Login 설정 (ApplicationContext에서 Bean 획득, 기존 체이닝 유지)

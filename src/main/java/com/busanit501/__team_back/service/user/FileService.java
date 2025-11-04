@@ -1,4 +1,4 @@
-package com.busanit501.__team_back.service;
+package com.busanit501.__team_back.service.user;
 
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;

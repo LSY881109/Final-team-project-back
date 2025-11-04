@@ -29,7 +29,15 @@ configurations {
 }
 
 repositories {
-    mavenCentral()
+    mavenCentral()  // Public repository
+    google()        // Public repository
+    maven {        // Custom repository
+        url = uri("https://oss.sonatype.org/content/repositories/releases/")
+    }
+    mavenLocal()   // Local repository
+    flatDir {      // File location
+        dirs "libs"
+    }
 }
 
 dependencies {
@@ -68,6 +76,15 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.11.0'
     implementation 'com.squareup.okhttp3:okhttp:4.11.0' // OkHttp dependency
 
+    // ----------------------------------------------------
+    //YYJ
+    // External APIs - YouTube API v3
+    // Maven Central에서 확인된 실제 존재하는 버전 사용
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev20241203-2.0.0'
+    implementation 'com.google.api-client:google-api-client:2.2.0'
+    implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
+    // ----------------------------------------------------
+
     // API 문서화 (SpringDoc) - 버전 교체 적용
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3'
 
@@ -85,6 +102,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Google Places API (및 기타 REST API) 호출을 위한 WebClient
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 
 //    CKM 추가
@@ -124,4 +144,4 @@ clean {
 }
 
 // 컴파일 시 clean 실행 설정 유지 (사용자 요청에 따라 유지)
-compileJava.dependsOn('clean')
+//compileJava.dependsOn('clean')

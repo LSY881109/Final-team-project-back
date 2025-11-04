@@ -1,0 +1,26 @@
+# FoodAnalysisResultDTO 클래스 설명
+
+`FoodAnalysisResultDTO`는 AI 서버의 분석 결과, DB의 영양 정보, 외부 API(YouTube)의 레시피 정보를 모두 통합하여 클라이언트에게 최종적으로 전달하는 핵심 DTO(Data Transfer Object)입니다.
+
+`AIAnalysisService`에서 모든 비즈니스 로직을 거친 후, 이 DTO를 조립하여 반환합니다.
+
+---
+
+## 1. 필드 정보
+
+-   `private String foodName;`
+    -   **설명:** AI가 분석한 음식의 이름입니다.
+
+-   `private Double accuracy;`
+    -   **설명:** AI 분석 결과의 신뢰도 또는 정확도입니다.
+
+-   `private NutritionData nutritionData;`
+    -   **설명:** `FoodReference`로부터 조회 및 변환된 상세 영양 정보를 담는 `NutritionData` 객체입니다.
+
+-   `private List<YoutubeRecipeDTO> youtubeRecipes;`
+    -   **설명:** `YoutubeApiService`를 통해 검색된 관련 유튜브 레시피 영상 목록입니다.
+
+-   `private String message;`
+    -   **설명:** 전체 분석 및 처리 과정의 성공 여부나 상태를 알려주는 메시지입니다.
+
+---
