@@ -1,6 +1,8 @@
 package com.busanit501.__team_back.controller;
 
+import com.busanit501.__team_back.dto.user.UserLoginRequest;
 import com.busanit501.__team_back.dto.user.UserSignUpRequest;
+import com.busanit501.__team_back.security.jwt.TokenInfo;
 import com.busanit501.__team_back.service.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
@@ -8,16 +10,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.stream.Collectors;
-
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/users") // Maria DB의 users 테이블에 접근
 @RequiredArgsConstructor
 @Log4j2
 public class UserController {
@@ -71,5 +69,11 @@ public class UserController {
             log.error("서버 내부 오류 발생", e);
             return ResponseEntity.internalServerError().body("서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
         }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenInfo> login(@RequestBody @Valid UserLoginRequest loginRequest) {
+        TokenInfo tokenInfo = userService.login(loginRequest);
+        return ResponseEntity.ok(tokenInfo);
     }
 }
