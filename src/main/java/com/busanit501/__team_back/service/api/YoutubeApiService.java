@@ -1,6 +1,7 @@
 package com.busanit501.__team_back.service.api;
 
 import com.busanit501.__team_back.dto.analysis.YoutubeRecipeDTO;
+import com.busanit501.__team_back.exception.YoutubeApiException;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
@@ -55,11 +56,17 @@ public class YoutubeApiService {
             }
         } catch (IOException e) {
             log.error("YouTube API 호출 중 오류 발생", e);
-            // 실제 프로덕션에서는 여기서 커스텀 예외를 던지는 것이 좋습니다.
-            // throw new YoutubeApiException("YouTube API 호출 실패", e);
+            log.error("오류 상세: {}", e.getMessage());
+            // YYJ.md 요구사항: API 키 만료, 네트워크 문제 등 심각한 오류 발생 시, 
+            // 원인 예외를 포함한 커스텀 RuntimeException을 던져서 처리 실패를 알립니다.
+            throw new YoutubeApiException("YouTube API 호출 실패: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("YouTube API 호출 중 예상치 못한 오류 발생", e);
+            throw new YoutubeApiException("YouTube API 호출 중 예상치 못한 오류: " + e.getMessage(), e);
         }
 
-        // 검색 결과가 없거나 오류 발생 시 빈 리스트 반환
+        // 검색 결과가 없는 경우 빈 리스트 반환
+        log.warn("YouTube 검색 결과가 없습니다. 음식 이름: {}", foodName);
         return Collections.emptyList();
     }
 }
