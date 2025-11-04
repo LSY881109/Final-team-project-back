@@ -1,6 +1,6 @@
 package com.busanit501.__team_back.controller;
 
-
+import com.busanit501.__team_back.dto.analysis.FoodAnalysisResultDTO;
 import com.busanit501.__team_back.service.user.AnalysisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -22,7 +22,7 @@ public class AnalysisController {
 
     // 이미지 분석 요청 처리
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> analyzeImage(
+    public ResponseEntity<FoodAnalysisResultDTO> analyzeImage(
             // TODO: Security 적용 후 @AuthenticationPrincipal 로 실제 로그인 사용자 ID를 가져와야 합니다.
             // 우선 테스트를 위해 userId를 요청 파라미터로 받습니다.
             @RequestParam("userId") Long userId,
@@ -31,15 +31,23 @@ public class AnalysisController {
         log.info("이미지 분석 요청 수신 - 사용자 ID: {}, 파일명: {}", userId, imageFile.getOriginalFilename());
 
         if (imageFile.isEmpty()) {
-            return ResponseEntity.badRequest().body("이미지 파일이 비어있습니다.");
+            return ResponseEntity.badRequest().body(
+                FoodAnalysisResultDTO.builder()
+                    .message("이미지 파일이 비어있습니다.")
+                    .build()
+            );
         }
 
         try {
-            String result = analysisService.analyzeImage(userId, imageFile);
+            FoodAnalysisResultDTO result = analysisService.analyzeImage(userId, imageFile);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("이미지 분석 중 서버 내부 오류 발생", e);
-            return ResponseEntity.internalServerError().body("이미지 분석 중 오류가 발생했습니다.");
+            return ResponseEntity.internalServerError().body(
+                FoodAnalysisResultDTO.builder()
+                    .message("이미지 분석 중 오류가 발생했습니다: " + e.getMessage())
+                    .build()
+            );
         }
     }
 }
