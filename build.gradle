@@ -29,10 +29,14 @@ configurations {
 }
 
 repositories {
-    mavenCentral()
-    google()
-    maven {
-        url "https://oss.sonatype.org/content/repositories/releases/"
+    mavenCentral()  // Public repository
+    google()        // Public repository
+    maven {        // Custom repository
+        url = uri("https://oss.sonatype.org/content/repositories/releases/")
+    }
+    mavenLocal()   // Local repository
+    flatDir {      // File location
+        dirs "libs"
     }
 }
 
@@ -73,7 +77,8 @@ dependencies {
     // ----------------------------------------------------
     //YYJ
     // External APIs - YouTube API v3
-    implementation 'com.google.apis:google-api-services-youtube:v3-rev20231120-2.0.0'
+    // Maven Central에서 확인된 실제 존재하는 버전 사용
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev20250714-2.0.0'
     implementation 'com.google.api-client:google-api-client:2.2.0'
     implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
     // ----------------------------------------------------

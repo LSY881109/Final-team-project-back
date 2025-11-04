@@ -31,12 +31,12 @@ public class YoutubeApiService {
 
         try {
             // 1. YouTube Search API 요청 객체 생성
-            YouTube.Search.List search = youTube.search().list("id,snippet");
+            YouTube.Search.List search = youTube.search().list(java.util.Arrays.asList("id", "snippet"));
 
             // 2. 검색 파라미터 설정
             search.setKey(apiKey);
             search.setQ(foodName + " 레시피"); // 검색어에 '레시피'를 추가하여 정확도 향상
-            search.setType("video"); // 비디오만 검색
+            search.setType(java.util.Arrays.asList("video")); // 비디오만 검색
             search.setMaxResults(MAX_RESULTS);
             search.setFields("items(id/videoId,snippet/title)"); // 필요한 정보만 요청
 

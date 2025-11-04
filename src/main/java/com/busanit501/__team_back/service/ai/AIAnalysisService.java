@@ -1,6 +1,6 @@
 package com.busanit501.__team_back.service.ai;
 
-import com.busanit501.__team_back.domain.mongo.FoodReference;
+import com.busanit501.__team_back.entity.MongoDB.FoodReference;
 import com.busanit501.__team_back.dto.analysis.FoodAnalysisResultDTO;
 import com.busanit501.__team_back.dto.analysis.NutritionData;
 import com.busanit501.__team_back.dto.analysis.YoutubeRecipeDTO;
