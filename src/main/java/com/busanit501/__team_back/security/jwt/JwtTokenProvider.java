@@ -12,10 +12,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -60,15 +62,18 @@ public class JwtTokenProvider {
         Date accessTokenExpiresIn = new Date(now + Long.parseLong(ACCESS_TOKEN_EXPIRE_TIME));
         Date refreshTokenExpiresIn = new Date(now + Long.parseLong(REFRESH_TOKEN_EXPIRE_TIME));
 
-        // 2. Access Token 생성
-        String accessToken = Jwts.builder()
+        // 2. [수정] Access Token 생성 시, authorities가 비어있지 않을 때만 claim에 추가
+        io.jsonwebtoken.JwtBuilder accessTokenBuilder = Jwts.builder()
                 .setSubject(authentication.getName())
-                .claim(AUTHORITIES_KEY, authorities)
                 .setExpiration(accessTokenExpiresIn)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+                .signWith(key, SignatureAlgorithm.HS256);
 
-        // 3. Refresh Token 생성
+        if (StringUtils.hasText(authorities)) {
+            accessTokenBuilder.claim(AUTHORITIES_KEY, authorities);
+        }
+        String accessToken = accessTokenBuilder.compact();
+
+        // 3. Refresh Token 생성 (Refresh Token에는 보통 권한 정보를 넣지 않음)
         String refreshToken = Jwts.builder()
                 .setExpiration(refreshTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -90,19 +95,20 @@ public class JwtTokenProvider {
         // 1. 토큰 복호화 및 클레임 추출
         Claims claims = parseClaims(accessToken);
 
-        if (claims.get(AUTHORITIES_KEY) == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
+        // [수정] 권한 정보가 없거나 비어있는 경우를 안전하게 처리
+        Object authoritiesClaim = claims.get(AUTHORITIES_KEY);
+        Collection<? extends GrantedAuthority> authorities;
+
+        if (authoritiesClaim == null || !StringUtils.hasText(authoritiesClaim.toString())) {
+            authorities = Collections.emptyList(); // 권한이 없으면 빈 목록으로 설정
+        } else {
+            authorities = Arrays.stream(authoritiesClaim.toString().split(","))
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
         }
 
-        // 2. 클레임에서 권한 정보 가져오기
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
-
-        // 3. UserDetails 객체를 생성하여 Authentication 반환
+        // 3. [수정함] UserDetails 객체를 생성하여 Authentication 반환
         UserDetails principal = new User(claims.getSubject(), "", authorities);
-
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
 

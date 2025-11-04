@@ -2,8 +2,7 @@ package com.busanit501.__team_back.entity.MongoDB;
 //"마이페이지" 기능의 핵심 데이터 소스
 
 import jakarta.persistence.Id;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 import org.bson.types.Binary;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -13,6 +12,8 @@ import java.util.List;
 @Document(collection = "analysis_histories")
 @Getter
 @Builder
+@AllArgsConstructor // Builder를 위해 추가
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AnalysisHistory {
 
     @Id
@@ -32,13 +33,15 @@ public class AnalysisHistory {
     private List<YoutubeRecipe> youtubeRecipes;
 
     private LocalDateTime analysisDate; // 분석 요청 시간
-}
 
-// 위 AnalysisHistory 클래스에 포함될 하위 객체 (임베디드 도큐먼트)
-@Getter
-@Builder
-class YoutubeRecipe {
-    private String title;
-    private String url;
-    private String thumbnailUrl;
+    @Getter
+    @Builder
+    @AllArgsConstructor // Builder를 위해 추가
+    @NoArgsConstructor // ModelMapper 등을 위해 추가
+    @ToString
+    public static class YoutubeRecipe {
+        private String title;
+        private String url;
+        private String thumbnailUrl; // 유튜브 링크의 영상 썸네일 (사용안함. TODO로 남겨둠)
+    }
 }

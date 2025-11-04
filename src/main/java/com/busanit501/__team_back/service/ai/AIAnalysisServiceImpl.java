@@ -32,9 +32,11 @@ public class AIAnalysisServiceImpl implements AIAnalysisService {
                 )
                 .build();
 
+//        application.properties에서 전체 URL을 관리하므로, 서비스 코드에서는 URL을 조합할 필요XX
         // 2. HTTP 요청(Request) 생성
         Request request = new Request.Builder()
-                .url(flaskApiUrl + "/analyze") // Flask API 엔드포인트
+//                .url(flaskApiUrl + "/analyze") // Flask API 엔드포인트
+                .url(flaskApiUrl) // flaskApiUrl에 이미 전체 엔드포인트 주소가 들어있음 - 변경
                 .post(requestBody)
                 .build();
 
