@@ -48,10 +48,16 @@ public class YoutubeApiService {
             // 4. 검색 결과가 있는 경우, DTO 리스트로 변환
             if (searchResultList != null && !searchResultList.isEmpty()) {
                 return searchResultList.stream()
-                        .map(item -> YoutubeRecipeDTO.builder()
-                                .title(item.getSnippet().getTitle())
-                                .videoId(item.getId().getVideoId())
-                                .build())
+                        .map(item -> {
+                            String videoId = item.getId().getVideoId();
+                            // YouTube URL 생성 (Flutter에서 바로 사용 가능하도록)
+                            String url = "https://www.youtube.com/watch?v=" + videoId;
+                            return YoutubeRecipeDTO.builder()
+                                    .title(item.getSnippet().getTitle())
+                                    .videoId(videoId)
+                                    .url(url)
+                                    .build();
+                        })
                         .collect(Collectors.toList());
             }
         } catch (IOException e) {
