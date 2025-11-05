@@ -1,5 +1,8 @@
 package com.busanit501.__team_back.security.oauth;
 
+import com.busanit501.__team_back.entity.MongoDB.ProfileImage;
+import com.busanit501.__team_back.repository.mongo.ProfileImageRepository;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,19 +17,23 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
+@Log4j2
 public class OAuth2UserAdapter {
 
     private final OAuth2AccountRepository oauthRepo;
     private final UserRepository userRepository;     // existsByUserId / existsByEmail 등 기존 메서드 활용
     private final UserReadRepository userReadRepo;   // findByEmail 전용(기존 인터페이스 수정 회피)
+    private final ProfileImageRepository profileImageRepository; // 프로필 이미지 저장용
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public OAuth2UserAdapter(OAuth2AccountRepository oauthRepo,
                              UserRepository userRepository,
-                             UserReadRepository userReadRepo) {
+                             UserReadRepository userReadRepo,
+                             ProfileImageRepository profileImageRepository) {
         this.oauthRepo = oauthRepo;
         this.userRepository = userRepository;
         this.userReadRepo = userReadRepo;
+        this.profileImageRepository = profileImageRepository;
     }
 
     @Transactional
@@ -35,6 +42,7 @@ public class OAuth2UserAdapter {
         String providerId = (String) mapped.get("providerId");
         String email = (String) mapped.get("email");
         String name = (String) mapped.getOrDefault("name", "User");
+        String pictureUrl = (String) mapped.get("picture"); // 네이버/구글 프로필 이미지 URL
 
         Optional<OAuth2Account> link = oauthRepo.findByProviderAndProviderId(provider, providerId);
         if (link.isPresent()) return;
@@ -54,11 +62,26 @@ public class OAuth2UserAdapter {
                 candidate = baseUserId + '_' + suffix;
             }
 
+            // 프로필 이미지 URL이 있으면 MongoDB에 저장
+            String profileImageId = null;
+            if (pictureUrl != null && !pictureUrl.isBlank()) {
+                try {
+                    ProfileImage profileImage = new ProfileImage();
+                    profileImage.setImageUrl(pictureUrl); // URL만 저장
+                    ProfileImage saved = profileImageRepository.save(profileImage);
+                    profileImageId = saved.getId();
+                    log.info("소셜 로그인 프로필 이미지 URL 저장 완료: {} (provider: {})", pictureUrl, provider);
+                } catch (Exception e) {
+                    log.warn("프로필 이미지 URL 저장 실패: {}", e.getMessage());
+                    // 실패해도 계속 진행 (null로 저장)
+                }
+            }
+
             User u = User.builder()
                     .userId(candidate)
                     .password(encoder.encode(PasswordGenerator.random64())) // 소셜 계정 임시 난수 비번
                     .email(email)
-                    .profileImageId(null)
+                    .profileImageId(profileImageId) // URL이 저장된 이미지 ID 설정
                     .build();
             return userRepository.save(u);
         });

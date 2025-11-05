@@ -24,12 +24,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static net.coobird.thumbnailator.Thumbnailator.createThumbnail;
 
 // 수정된 부분은 주석으로 //으로 표시함.
 @Service
@@ -47,9 +46,14 @@ public class AnalysisServiceImpl implements AnalysisService {
 
 //====================================================================
     // [수정] Flask 모델의 클래스 이름을 우리 시스템의 음식 이름으로 매핑하는 Map 추가
+    // Flask EfficientNet 모델이 반환하는 클래스: ['감바스', '숯불치킨', '양념치킨', '파스타', '후라이드치킨']
+    // 클래스 이름이 이미 음식 이름이므로 그대로 사용
     private static final Map<String, String> classNameToFoodNameMap = Map.of(
-            "Hammer", "파스타",
-            "Nipper", "감바스"
+            "감바스", "감바스",
+            "숯불치킨", "숯불치킨",
+            "양념치킨", "양념치킨",
+            "파스타", "파스타",
+            "후라이드치킨", "후라이드치킨"
     );
 //====================================================================
 
@@ -64,10 +68,13 @@ public class AnalysisServiceImpl implements AnalysisService {
             AiResponse aiResult = aiAnalysisService.analyzeImage(image);
 
             //====================================================================
-            String recognizedClassName = aiResult.getPredictedClass(); // "Hammer" 또는 "Nipper"
-            String foodName = classNameToFoodNameMap.getOrDefault(recognizedClassName, "알 수 없는 음식");
-            double accuracy = aiResult.getConfidence() / 100.0; // 0.0 ~ 1.0 사이 값으로 변환
-            log.info("AI 분석 결과: {} -> {} (정확도: {}%)", recognizedClassName, foodName, aiResult.getConfidence());
+            String recognizedClassName = aiResult.getPredictedClass(); // Flask에서 반환한 클래스 이름
+            // Flask에서 반환하는 클래스 이름이 이미 음식 이름이므로 그대로 사용
+            String foodName = classNameToFoodNameMap.getOrDefault(recognizedClassName, recognizedClassName);
+            // confidence는 0~100 범위로 반환되므로 0.0~1.0으로 변환
+            double accuracy = aiResult.getConfidence() / 100.0;
+            log.info("AI 분석 결과: {} (정확도: {}%)", foodName, aiResult.getConfidence());
+            log.debug("Flask 응답 - predictedClass: {}, confidence: {}", recognizedClassName, aiResult.getConfidence());
             //====================================================================
 
 //            String foodName = aiResult.getFoodName();
@@ -85,12 +92,18 @@ public class AnalysisServiceImpl implements AnalysisService {
                 );
                 log.info("{} 영양 정보 조회 성공", foodName);
             } else {
-                log.warn("{} 영양 정보를 찾을 수 없습니다.", foodName);
+                log.warn("{} 영양 정보를 찾을 수 없습니다. DB에 영양 정보를 추가해주세요.", foodName);
             }
 
-            // [STEP 3] 음식 이름으로 YouTube API 검색
-            List<YoutubeRecipeDTO> youtubeRecipes = youtubeApiService.searchRecipes(foodName);
-            log.info("{} 관련 유튜브 레시피 검색 완료: {}개", foodName, youtubeRecipes.size());
+            // [STEP 3] 음식 이름으로 YouTube API 검색 (실패해도 계속 진행)
+            List<YoutubeRecipeDTO> youtubeRecipes = Collections.emptyList();
+            try {
+                youtubeRecipes = youtubeApiService.searchRecipes(foodName);
+                log.info("{} 관련 유튜브 레시피 검색 완료: {}개", foodName, youtubeRecipes.size());
+            } catch (Exception e) {
+                log.warn("YouTube API 검색 실패 (계속 진행): {}", e.getMessage());
+                // YouTube API 실패해도 분석 결과는 반환
+            }
 
 //====================================================================
             // [STEP 4] 원본 이미지를 학습용 DB에 저장 (비동기 처리 고려)
@@ -116,32 +129,39 @@ public class AnalysisServiceImpl implements AnalysisService {
 
 //====================================================================
             // [STEP 5] 썸네일 생성 및 최종 분석 결과를 AnalysisHistory DB에 저장
-            // (1) 리사이징 수행: createThumbnail 헬퍼 메소드를 호출하여
-            //     사용자가 업로드한 원본 이미지(image)를 256x256 크기로 리사이즈합니다.
-            byte[] thumbnailData = createThumbnail(image, 256);
+            try {
+                // (1) 리사이징 수행: createThumbnail 헬퍼 메소드를 호출하여
+                //     사용자가 업로드한 원본 이미지(image)를 256x256 크기로 리사이즈합니다.
+                byte[] thumbnailData = createThumbnail(image, 256);
 
-            AnalysisHistory history = AnalysisHistory.builder()
-                    .userId(userId)
+                AnalysisHistory history = AnalysisHistory.builder()
+                        .userId(userId)
+                        // (2) DB에 저장: 리사이즈된 이미지 데이터(thumbnailData)를
+                        //     Binary 형태로 변환하여 thumbnailImageData 필드에 담습니다.
+                        .thumbnailImageData(new Binary(thumbnailData))
+                        .thumbnailContentType(image.getContentType())
+                        .recognizedFoodName(foodName)
+                        .accuracy(accuracy) // 0.0 ~ 1.0 사이 값으로 저장
+                        .youtubeRecipes(
+                                // YoutubeRecipeDto 리스트를 AnalysisHistory의 YoutubeRecipe 리스트로 변환
+                                youtubeRecipes.stream()
+                                        .map(dto ->
+                                                modelMapper.map(dto, AnalysisHistory.YoutubeRecipe.class))
+                                        .collect(Collectors.toList())
+                        )
+                        .analysisDate(LocalDateTime.now())
+                        .build();
 
-                    // (2) DB에 저장: 리사이즈된 이미지 데이터(thumbnailData)를
-                    //     Binary 형태로 변환하여 thumbnailImageData 필드에 담습니다.
-                    .thumbnailImageData(new Binary(thumbnailData))
-                    .thumbnailContentType(image.getContentType())
-                    .recognizedFoodName(foodName)
-                    .accuracy(accuracy) // 0.0 ~ 1.0 사이 값으로 저장
-                    .youtubeRecipes(
-                            // YoutubeRecipeDto 리스트를 AnalysisHistory의 YoutubeRecipe 리스트로 변환
-                            youtubeRecipes.stream()
-                                    .map(dto ->
-                                            modelMapper.map(dto, AnalysisHistory.YoutubeRecipe.class))
-                                    .collect(Collectors.toList())
-                    )
-                    .analysisDate(LocalDateTime.now())
-                    .build();
-
-            // (3) MongoDB에 최종 저장
-            analysisHistoryRepository.save(history);
-            log.info("사용자 분석 기록 저장 완료. History ID: {}", history.getId());
+                // (3) MongoDB에 최종 저장
+                analysisHistoryRepository.save(history);
+                log.info("사용자 분석 기록 저장 완료. History ID: {}", history.getId());
+            } catch (IOException e) {
+                log.error("썸네일 생성 실패 (분석 결과는 반환): {}", e.getMessage());
+                // 썸네일 생성 실패해도 분석 결과는 반환
+            } catch (Exception e) {
+                log.error("분석 기록 저장 실패 (분석 결과는 반환): {}", e.getMessage());
+                // MongoDB 저장 실패해도 분석 결과는 반환
+            }
             //====================================================================
 
 

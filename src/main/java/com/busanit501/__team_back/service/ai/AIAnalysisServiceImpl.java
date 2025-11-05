@@ -43,11 +43,23 @@ public class AIAnalysisServiceImpl implements AIAnalysisService {
         // 3. 요청 실행 및 응답 수신
         try (Response response = okHttpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new IOException("Flask 서버 응답 실패: " + response);
+                String errorBody = response.body() != null ? response.body().string() : "응답 본문 없음";
+                throw new IOException(String.format(
+                    "Flask 서버 응답 실패 - HTTP %d: %s", 
+                    response.code(), 
+                    errorBody
+                ));
             }
             // 4. 응답받은 JSON 문자열을 DTO 객체로 변환하여 반환
             String responseBody = response.body().string();
+            if (responseBody == null || responseBody.trim().isEmpty()) {
+                throw new IOException("Flask 서버로부터 빈 응답을 받았습니다.");
+            }
             return objectMapper.readValue(responseBody, AiResponse.class);
+        } catch (java.net.ConnectException e) {
+            throw new IOException("Flask 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요: " + flaskApiUrl, e);
+        } catch (java.net.SocketTimeoutException e) {
+            throw new IOException("Flask 서버 응답 시간 초과. 서버 상태를 확인하세요.", e);
         }
     }
 }

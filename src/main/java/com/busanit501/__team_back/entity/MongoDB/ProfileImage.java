@@ -16,6 +16,5 @@ public class ProfileImage {
 
     private Binary imageData; // 이미지 바이너리 데이터
     private String contentType; // 이미지 타입 (e.g., "image/png")
-
-
+    private String imageUrl; // 소셜 로그인 프로필 이미지 URL (네이버/구글)
 }
