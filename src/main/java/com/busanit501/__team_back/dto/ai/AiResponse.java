@@ -10,8 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AiResponse {
-//    private String foodName;
-//    private double accuracy;
 
 //     JSON의 'class' 키를 'predictedClass' 필드에 매핑
     @JsonProperty("class")

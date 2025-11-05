@@ -44,18 +44,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     private final YoutubeApiService youtubeApiService;
     private final ModelMapper modelMapper;
 
-//====================================================================
-    // [수정] Flask 모델의 클래스 이름을 우리 시스템의 음식 이름으로 매핑하는 Map 추가
-    // Flask EfficientNet 모델이 반환하는 클래스: ['감바스', '숯불치킨', '양념치킨', '파스타', '후라이드치킨']
-    // 클래스 이름이 이미 음식 이름이므로 그대로 사용
-//    private static final Map<String, String> classNameToFoodNameMap = Map.of(
-//            "감바스", "감바스",
-//            "숯불치킨", "숯불치킨",
-//            "양념치킨", "양념치킨",
-//            "파스타", "파스타",
-//            "후라이드치킨", "후라이드치킨"
-//    );
-//====================================================================
+
 
     @Override
     public FoodAnalysisResultDTO analyzeImage(Long userId, MultipartFile image) {
@@ -67,21 +56,12 @@ public class AnalysisServiceImpl implements AnalysisService {
             // [STEP 1] Flask AI 서버로 이미지 전송 및 결과 수신
             AiResponse aiResult = aiAnalysisService.analyzeImage(image);
 
-            //====================================================================
-//            String recognizedClassName = aiResult.getPredictedClass(); // Flask에서 반환한 클래스 이름
-
             String foodName = aiResult.getPredictedClass();
-            // confidence는 0~100 범위로 반환되므로 0.0~1.0으로 변환
-//            double accuracy = aiResult.getConfidence() / 100.0; //  Flask-> confidence가 %단위 DB 저장을 위해 나누기100
+
+            //  Flask-> confidence가 %단위 DB 저장을 위해 나누기100
             double accuracyForDB = aiResult.getConfidence() / 100.0;
-
             log.info("AI 분석 결과: {} (정확도: {}%)", foodName, aiResult.getConfidence());
-//            log.debug("Flask 응답 - predictedClass: {}, confidence: {}", recognizedClassName, aiResult.getConfidence());
-            //====================================================================
 
-//            String foodName = aiResult.getFoodName();
-//            Double accuracy = aiResult.getAccuracy();
-//            log.info("AI 분석 결과: {} ({}%)", foodName, accuracy * 100);
 
             // [STEP 2] 인식된 음식 이름으로 FoodReference DB에서 영양 정보 조회 및 DTO 변환
             Optional<FoodReference> foodRefOptional = foodReferenceRepository.findByFoodName(foodName);
@@ -109,10 +89,9 @@ public class AnalysisServiceImpl implements AnalysisService {
 
 //====================================================================
             // [STEP 4] 원본 이미지를 학습용 DB에 저장 (비동기 처리 고려)
-            // 이 작업은 사용자 응답 시간에 영향을 주지 않도록 @Async 등을
-            // 사용하여 비동기적으로 처리하는 것이 좋음. 우선 동기방식으로 만듦.
-            // FoodAnalysisData data = FoodAnalysisData.builder()...
-            // foodAnalysisDataRepository.save(data);
+                // 이 작업은 사용자 응답 시간에 영향을 주지 않도록 @Async 등을
+                // 사용하여 비동기적으로 처리하는 것이 좋음. 우선 동기방식으로 만듦.
+;
             try {
                 FoodAnalysisData trainingData = FoodAnalysisData.builder()
                         .foodCategory(foodName) // AI가 분석한 음식 이름으로 카테고리 지정
@@ -127,21 +106,17 @@ public class AnalysisServiceImpl implements AnalysisService {
                 // 이 작업이 실패하더라도 사용자에게 보내는 최종 분석 결과에는 영향을 주지 않도록
                 // 여기서 예외를 잡아서 처리하고 계속 진행하는 것이 좋습니다.
             }
-//====================================================================
 
-//====================================================================
             // [STEP 5] 썸네일 생성 및 최종 분석 결과를 AnalysisHistory DB에 저장
             try {
                 // (1) 리사이징 수행: createThumbnail 헬퍼 메소드를 호출하여
-                //     사용자가 업로드한 원본 이미지(image)를 256x256 크기로 리사이즈합니다.
+                    // 사용자가 업로드한 원본 이미지(image)를 256x256 크기로 리사이즈합니다.
                 byte[] thumbnailData = createThumbnail(image, 256);
 
                 AnalysisHistory history = AnalysisHistory.builder()
                         .userId(userId)
-                        // (2) DB에 저장: 리사이즈된 이미지 데이터(thumbnailData)를
-                        //     Binary 형태로 변환하여 thumbnailImageData 필드에 담습니다.
-//                        .thumbnailImageData(new Binary(thumbnailData))
-//                        .thumbnailContentType(image.getContentType())
+                        .thumbnailImageData(new Binary(thumbnailData))
+                        .thumbnailContentType(image.getContentType())
                         .recognizedFoodName(foodName)
                         .accuracy(accuracyForDB) // 0.0 ~ 1.0 사이 값으로 저장
                         .youtubeRecipes(
