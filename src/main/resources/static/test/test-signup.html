@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>/api/users/signup 정적 테스트</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 720px; margin: 40px auto; }
+    label { display:block; margin: 10px 0 4px; }
+    input, button { padding: 8px; width: 100%; box-sizing: border-box; }
+    button { margin-top: 12px; }
+    pre { background:#f7f7f7; padding:12px; white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>/api/users/signup (multipart/form-data) — 정적 폼</h2>
+  <form id="f" enctype="multipart/form-data" method="post" onsubmit="return false;">
+    <label>userId</label><input name="userId" required>
+    <label>email</label><input name="email" type="email" required>
+    <label>password</label><input name="password" type="password" required>
+    <label>passwordConfirm</label><input name="passwordConfirm" type="password" required>
+    <label>profileImage</label><input name="profileImage" type="file" accept="image/*">
+    <button type="button" onclick="submitMultipart()">전송</button>
+  </form>
+  <p><a href="/test/echo">/test/echo</a> (요청/쿠키 확인)</p>
+  <pre id="out"></pre>
+  <script>
+  async function submitMultipart(){
+    const form = document.getElementById('f');
+    const fd = new FormData();
+    const payload = {
+      userId: form.userId.value,
+      email: form.email.value,
+      password: form.password.value,
+      passwordConfirm: form.passwordConfirm.value
+    };
+    fd.append('signupData', JSON.stringify(payload));
+    if (form.profileImage.files[0]) fd.append('profileImage', form.profileImage.files[0]);
+    const res = await fetch('/api/users/signup', { method:'POST', body: fd });
+    const txt = await res.text();
+    document.getElementById('out').textContent = "HTTP " + res.status + "\n\n" + txt;
+  }
+  </script>
+</body>
+</html>
+
