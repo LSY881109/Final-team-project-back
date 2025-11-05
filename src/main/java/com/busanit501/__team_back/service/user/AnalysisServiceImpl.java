@@ -48,13 +48,13 @@ public class AnalysisServiceImpl implements AnalysisService {
     // [수정] Flask 모델의 클래스 이름을 우리 시스템의 음식 이름으로 매핑하는 Map 추가
     // Flask EfficientNet 모델이 반환하는 클래스: ['감바스', '숯불치킨', '양념치킨', '파스타', '후라이드치킨']
     // 클래스 이름이 이미 음식 이름이므로 그대로 사용
-    private static final Map<String, String> classNameToFoodNameMap = Map.of(
-            "감바스", "감바스",
-            "숯불치킨", "숯불치킨",
-            "양념치킨", "양념치킨",
-            "파스타", "파스타",
-            "후라이드치킨", "후라이드치킨"
-    );
+//    private static final Map<String, String> classNameToFoodNameMap = Map.of(
+//            "감바스", "감바스",
+//            "숯불치킨", "숯불치킨",
+//            "양념치킨", "양념치킨",
+//            "파스타", "파스타",
+//            "후라이드치킨", "후라이드치킨"
+//    );
 //====================================================================
 
     @Override
@@ -68,13 +68,15 @@ public class AnalysisServiceImpl implements AnalysisService {
             AiResponse aiResult = aiAnalysisService.analyzeImage(image);
 
             //====================================================================
-            String recognizedClassName = aiResult.getPredictedClass(); // Flask에서 반환한 클래스 이름
-            // Flask에서 반환하는 클래스 이름이 이미 음식 이름이므로 그대로 사용
-            String foodName = classNameToFoodNameMap.getOrDefault(recognizedClassName, recognizedClassName);
+//            String recognizedClassName = aiResult.getPredictedClass(); // Flask에서 반환한 클래스 이름
+
+            String foodName = aiResult.getPredictedClass();
             // confidence는 0~100 범위로 반환되므로 0.0~1.0으로 변환
-            double accuracy = aiResult.getConfidence() / 100.0;
+//            double accuracy = aiResult.getConfidence() / 100.0; //  Flask-> confidence가 %단위 DB 저장을 위해 나누기100
+            double accuracyForDB = aiResult.getConfidence() / 100.0;
+
             log.info("AI 분석 결과: {} (정확도: {}%)", foodName, aiResult.getConfidence());
-            log.debug("Flask 응답 - predictedClass: {}, confidence: {}", recognizedClassName, aiResult.getConfidence());
+//            log.debug("Flask 응답 - predictedClass: {}, confidence: {}", recognizedClassName, aiResult.getConfidence());
             //====================================================================
 
 //            String foodName = aiResult.getFoodName();
@@ -138,10 +140,10 @@ public class AnalysisServiceImpl implements AnalysisService {
                         .userId(userId)
                         // (2) DB에 저장: 리사이즈된 이미지 데이터(thumbnailData)를
                         //     Binary 형태로 변환하여 thumbnailImageData 필드에 담습니다.
-                        .thumbnailImageData(new Binary(thumbnailData))
-                        .thumbnailContentType(image.getContentType())
+//                        .thumbnailImageData(new Binary(thumbnailData))
+//                        .thumbnailContentType(image.getContentType())
                         .recognizedFoodName(foodName)
-                        .accuracy(accuracy) // 0.0 ~ 1.0 사이 값으로 저장
+                        .accuracy(accuracyForDB) // 0.0 ~ 1.0 사이 값으로 저장
                         .youtubeRecipes(
                                 // YoutubeRecipeDto 리스트를 AnalysisHistory의 YoutubeRecipe 리스트로 변환
                                 youtubeRecipes.stream()
@@ -154,6 +156,7 @@ public class AnalysisServiceImpl implements AnalysisService {
 
                 // (3) MongoDB에 최종 저장
                 analysisHistoryRepository.save(history);
+
                 log.info("사용자 분석 기록 저장 완료. History ID: {}", history.getId());
             } catch (IOException e) {
                 log.error("썸네일 생성 실패 (분석 결과는 반환): {}", e.getMessage());
@@ -168,7 +171,7 @@ public class AnalysisServiceImpl implements AnalysisService {
             // [STEP 6] 조회 및 변환된 모든 데이터를 최종 FoodAnalysisResultDTO에 담아 반환
             return FoodAnalysisResultDTO.builder()
                     .foodName(foodName)
-                    .accuracy(accuracy)
+                    .accuracy(aiResult.getConfidence())
                     .nutritionData(nutritionData)
                     .youtubeRecipes(youtubeRecipes)
                     .message("분석 완료")
