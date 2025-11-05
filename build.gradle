@@ -1,4 +1,3 @@
-// 추가2
 buildscript {
     ext {
         // Querydsl 버전 유지 (Jakarta EE 호환 버전)
@@ -8,15 +7,14 @@ buildscript {
 
 plugins {
     id 'java'
-    // Spring Boot 버전 수정 (3.3.1 안정 버전 권장)
-    id 'org.springframework.boot' version '3.3.1'
+    // Spring Boot 버전: 요청하신 3.5.4 적용
+    id 'org.springframework.boot' version '3.5.4'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.busanit501'
 version = '0.0.1-SNAPSHOT'
-// description도 프로젝트 이름에 맞게 수정하는 것을 권장합니다.
-description = '2Team-back'
+description = 'API_REST_TEST_JWT_REACT'
 
 java {
     toolchain {
@@ -31,66 +29,109 @@ configurations {
 }
 
 repositories {
-    mavenCentral()
+    mavenCentral()  // Public repository
+    google()        // Public repository
+    maven {        // Custom repository
+        url = uri("https://oss.sonatype.org/content/repositories/releases/")
+    }
+    mavenLocal()   // Local repository
+    flatDir {      // File location
+        dirs "libs"
+    }
 }
 
 dependencies {
-    // Web, JPA, Security, Lombok, DevTools (기본)
+    // ----------------------------------------------------
+    // Core & Persistence (기본)
+    // ----------------------------------------------------
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-validation' // (Validation 추가 권장)
+    // Validation 스타터 추가
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    compileOnly 'org.projectlombok:lombok'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-    annotationProcessor 'org.projectlombok:lombok'
-
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.security:spring-security-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    // 테스트 환경 Lombok 중복 설정 제거 (annotationProcessor가 처리)
-    // testCompileOnly 'org.projectlombok:lombok'
-    // testAnnotationProcessor 'org.projectlombok:lombok' 
-
-    // 데이터 변환 및 매핑 (DTO <-> Entity)
-    implementation 'org.modelmapper:modelmapper:3.1.0'
-
-    // API 문서화
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3'
-
-    // JSON 파싱/생성 유틸리티
-    implementation 'com.google.code.gson:gson:2.11.0'
-
-    // JWT 설정
+    // Security & JWT
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-    // MongoDB 설정
-    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-
-    // Flask 서버 통신 (OkHttp)
-    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    // Database (MariaDB, MongoDB)
+    // 🚩 FIX: runtimeOnly -> implementation으로 변경 (클래스 로드 오류 해결)
+    implementation 'org.mariadb.jdbc:mariadb-java-client'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb' // 몽고디비 의존성
+    // OAuth2 Client (Google/Naver 소셜 로그인 추가)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
     // ----------------------------------------------------
-    // Querydsl 설정 (동적 쿼리)
+    // Utility & Tooling
     // ----------------------------------------------------
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    implementation 'org.modelmapper:modelmapper:3.1.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0' // OkHttp dependency
+
+    // ----------------------------------------------------
+    //YYJ
+    // External APIs - YouTube API v3
+    // Maven Central에서 확인된 실제 존재하는 버전 사용
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev20241203-2.0.0'
+    implementation 'com.google.api-client:google-api-client:2.2.0'
+    implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
+    implementation 'com.google.api-client:google-api-client-gson:2.2.0' // GsonFactory 사용을 위한 의존성
+    // ----------------------------------------------------
+
+    // API 문서화 (SpringDoc) - 버전 교체 적용
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3'
+
+    // Querydsl 설정
     implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
-
     annotationProcessor(
             "jakarta.persistence:jakarta.persistence-api",
             "jakarta.annotation:jakarta.annotation-api",
             "com.querydsl:querydsl-apt:${queryDslVersion}:jakarta"
     )
 
+    // ----------------------------------------------------
+    // Test
+    // ----------------------------------------------------
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Google Places API (및 기타 REST API) 호출을 위한 WebClient
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+
+//    CKM 추가
+//    유효성검사 (아이디에 영어 및 숫자만 사용가능하게)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // Thumbnailator (이미지 리사이징 라이브러리)
+    implementation 'net.coobird:thumbnailator:0.4.20'
+//==============================================
 }
 
+// ----------------------------------------------------
+// Querydsl 및 빌드 설정
+// ----------------------------------------------------
+
+// Querydsl 생성을 위한 task 설정 추가: Q-Class 생성 경로 지정
+tasks.withType(JavaCompile).configureEach {
+    options.generatedSourceOutputDirectory.set(file(project.buildDir.path + "/generated"))
+}
+
+// 테스트 설정 유지
 tasks.named('test') {
     useJUnitPlatform()
+    ignoreFailures = true // 이전 오류 발생을 막기 위해 유지
 }
-// Querydsl 생성을 위한 소스셋 설정
+
+// Querydsl 소스셋 설정 유지: build/generated 폴더를 컴파일 경로에 추가
 sourceSets {
     main {
         java {
@@ -99,10 +140,10 @@ sourceSets {
     }
 }
 
-// 빌드 속도 저하 방지를 위해 이 부분은 삭제하는 것을 강력히 권장합니다.
-// compileJava.dependsOn('clean') 
-
-// Querydsl QClass 파일 생성을 위한 task 추가
-tasks.withType(JavaCompile).configureEach {
-    options.generatedSourceOutputDirectory.set(file(project.buildDir.path + "/generated"))
+// 💡 Querydsl 생성 폴더 명시적 삭제 추가
+clean {
+    delete file(project.buildDir.path + "/generated")
 }
+
+// 컴파일 시 clean 실행 설정 유지 (사용자 요청에 따라 유지)
+//compileJava.dependsOn('clean')

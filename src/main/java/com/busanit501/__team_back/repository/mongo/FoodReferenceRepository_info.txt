@@ -1,0 +1,30 @@
+# FoodReferenceRepository 인터페이스 기능 설명
+
+`FoodReferenceRepository`는 MongoDB의 `food_references` 컬렉션에 접근하기 위한 데이터 인터페이스입니다. Spring Data MongoDB의 `MongoRepository`를 상속받아 강력하고 편리한 기능들을 제공합니다.
+
+---
+
+## 1. 기본 제공 기능 (MongoRepository 상속)
+
+`MongoRepository<FoodReference, String>`를 상속받는 것만으로, 아래와 같은 핵심적인 데이터베이스 CRUD(Create, Read, Update, Delete) 기능들이 자동으로 구현됩니다.
+
+-   `save(FoodReference)`: 새로운 FoodReference 문서를 저장하거나, 이미 ID가 존재하면 업데이트합니다.
+-   `findById(String id)`: 주어진 ID로 문서를 찾아 `Optional<FoodReference>`로 반환합니다.
+-   `findAll()`: 컬렉션의 모든 문서를 `List<FoodReference>`로 반환합니다.
+-   `deleteById(String id)`: 주어진 ID의 문서를 삭제합니다.
+-   `count()`: 컬렉션에 있는 문서의 총 개수를 반환합니다.
+-   ... 이 외에도 페이징, 정렬 등 다양한 기능이 있습니다.
+
+---
+
+## 2. 추가된 기능 (직접 정의한 메서드)
+
+### `Optional<FoodReference> findByFoodName(String foodName);`
+
+이 메서드는 Spring Data MongoDB의 "쿼리 메서드(Query Method)" 기능을 활용한 것입니다.
+
+-   **기능:** 메서드 이름(`findByFoodName`)을 분석하여, `foodName` 필드의 값과 일치하는 `FoodReference` 문서를 찾아달라는 쿼리를 자동으로 생성하고 실행합니다.
+-   **동작 예시:** `repository.findByFoodName("된장찌개")`를 호출하면, MongoDB에 `{"foodName": "된장찌개"}`라는 조건으로 데이터를 검색합니다.
+-   **반환 타입 (`Optional<...>`):
+    -   검색 결과가 있으면, 해당 `FoodReference` 객체를 담은 `Optional`을 반환합니다.
+    -   검색 결과가 없으면, `null` 대신 "비어있는" `Optional` 객체를 반환합니다. 이는 `NullPointerException`을 방지하는 안전한 코드를 작성하도록 유도합니다.
