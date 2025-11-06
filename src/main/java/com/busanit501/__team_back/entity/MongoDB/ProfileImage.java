@@ -1,6 +1,6 @@
 package com.busanit501.__team_back.entity.MongoDB;
 
-import jakarta.persistence.Id;
+import org.springframework.data.annotation.Id;
 import lombok.Getter;
 import lombok.Setter;
 import org.bson.types.Binary;
