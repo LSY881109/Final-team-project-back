@@ -50,10 +50,11 @@ public class YoutubeApiService {
                 return searchResultList.stream()
                         .map(item -> {
                             String videoId = item.getId().getVideoId();
+                            String title = decodeHtmlEntities(item.getSnippet().getTitle()); // HTML 엔티티 디코딩
                             // YouTube URL 생성 (Flutter에서 바로 사용 가능하도록)
                             String url = "https://www.youtube.com/watch?v=" + videoId;
                             return YoutubeRecipeDTO.builder()
-                                    .title(item.getSnippet().getTitle())
+                                    .title(title)
                                     .videoId(videoId)
                                     .url(url)
                                     .build();
@@ -90,32 +91,75 @@ public class YoutubeApiService {
         try {
             YouTube.Search.List search = youTube.search().list(java.util.Arrays.asList("id", "snippet"));
             search.setKey(apiKey);
-            String finalQuery = searchQuery + " 레시피 -shorts"; // Shorts 제외
+            // 키워드가 있을 때는 더 명확한 검색 쿼리 생성
+            String finalQuery;
+            if (userKeyword != null && !userKeyword.trim().isEmpty()) {
+                // "김치 파스타 레시피" 형태로 검색하여 두 키워드가 모두 포함된 영상 찾기
+                finalQuery = searchQuery + " 레시피 만들기 -shorts";
+            } else {
+                finalQuery = searchQuery + " 레시피 -shorts";
+            }
             search.setQ(finalQuery);
             search.setType(java.util.Arrays.asList("video"));
             search.setVideoDuration("medium"); // 4분 이상 영상만 검색하여 Shorts 제외
             search.setMaxResults(MAX_RESULTS);
             search.setFields("items(id/videoId,snippet/title)");
 
+            // 정렬 방식을 설정하지 않으면 기본값으로 relevance 사용
+            // relevance가 가장 관련성 높은 결과를 반환
             if (orderBy != null && !orderBy.isEmpty()) {
                 search.setOrder(orderBy);
+            } else {
+                // 기본값으로 관련도순 사용 (키워드 검색 시 더 정확한 결과)
+                search.setOrder("relevance");
             }
 
             SearchListResponse searchResponse = search.execute();
             List<SearchResult> searchResultList = searchResponse.getItems();
 
             if (searchResultList != null && !searchResultList.isEmpty()) {
-                return searchResultList.stream()
+                // 키워드가 있을 경우 제목에 키워드와 음식 이름이 모두 포함된 영상만 필터링
+                List<YoutubeRecipeDTO> results = searchResultList.stream()
                         .map(item -> {
                             String videoId = item.getId().getVideoId();
+                            String title = decodeHtmlEntities(item.getSnippet().getTitle()); // HTML 엔티티 디코딩
                             String url = "https://www.youtube.com/watch?v=" + videoId;
                             return YoutubeRecipeDTO.builder()
-                                    .title(item.getSnippet().getTitle())
+                                    .title(title)
                                     .videoId(videoId)
                                     .url(url)
                                     .build();
                         })
+                        .filter(dto -> {
+                            // 키워드가 없으면 모든 결과 반환
+                            if (userKeyword == null || userKeyword.trim().isEmpty()) {
+                                return true;
+                            }
+                            // 키워드와 음식 이름이 모두 제목에 포함된 경우만 반환
+                            String keyword = userKeyword.trim().toLowerCase();
+                            String food = foodName.toLowerCase();
+                            String title = dto.getTitle().toLowerCase();
+                            return title.contains(keyword) && title.contains(food);
+                        })
                         .collect(Collectors.toList());
+                
+                // 필터링 후 결과가 없고 키워드가 있는 경우, 원본 결과 반환 (최소한의 결과는 보여줌)
+                if (results.isEmpty() && userKeyword != null && !userKeyword.trim().isEmpty()) {
+                    log.warn("키워드 '{}'와 '{}'가 모두 포함된 결과가 없어 원본 결과를 반환합니다.", userKeyword, foodName);
+                    return searchResultList.stream()
+                            .map(item -> {
+                                String videoId = item.getId().getVideoId();
+                                String title = decodeHtmlEntities(item.getSnippet().getTitle()); // HTML 엔티티 디코딩
+                                String url = "https://www.youtube.com/watch?v=" + videoId;
+                                return YoutubeRecipeDTO.builder()
+                                        .title(title)
+                                        .videoId(videoId)
+                                        .url(url)
+                                        .build();
+                            })
+                            .collect(Collectors.toList());
+                }
+                return results;
             }
         } catch (IOException e) {
             log.error("YouTube API 호출 중 오류 발생", e);
@@ -139,5 +183,26 @@ public class YoutubeApiService {
         }
         String keyword = userKeyword.trim();
         return keyword + " " + foodName; // "김치 후라이드"
+    }
+
+    /**
+     * HTML 엔티티를 디코딩합니다.
+     * 예: &quot; -> ", &amp; -> &, &lt; -> <, &gt; -> >, &#39; -> '
+     */
+    private String decodeHtmlEntities(String text) {
+        if (text == null) {
+            return null;
+        }
+        return text
+                .replace("&quot;", "\"")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&#39;", "'")
+                .replace("&apos;", "'")
+                .replace("&nbsp;", " ")
+                .replace("&copy;", "©")
+                .replace("&reg;", "®")
+                .replace("&trade;", "™");
     }
 }
