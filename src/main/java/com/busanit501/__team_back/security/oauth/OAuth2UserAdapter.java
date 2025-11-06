@@ -45,15 +45,20 @@ public class OAuth2UserAdapter {
         String pictureUrl = (String) mapped.get("picture"); // 네이버/구글 프로필 이미지 URL
 
         Optional<OAuth2Account> link = oauthRepo.findByProviderAndProviderId(provider, providerId);
-        if (link.isPresent()) return;
+
+        // (1) 이미 소셜 연동이 있더라도 URL은 매 로그인마다 갱신
+        if (link.isPresent()) {
+            User linkedUser = link.get().getUser();
+            syncProfileImage(linkedUser, pictureUrl);
+            return;
+        }
 
         if (email == null || email.isBlank()) {
             throw new IllegalStateException("Email is required for social sign-in.");
         }
 
-        // 기존 유저 조회 (기존 UserRepository 수정 피하려고 별도 ReadRepo 사용)
+        // (2) 기존 유저 조회 또는 생성
         User user = userReadRepo.findByEmail(email).orElseGet(() -> {
-            // userId 필요: 이메일 prefix 또는 provider 기반으로 유니크 생성
             String baseUserId = (email.contains("@") ? email.substring(0, email.indexOf("@")) : (provider + '_' + providerId));
             String candidate = baseUserId;
             int suffix = 0;
@@ -62,29 +67,31 @@ public class OAuth2UserAdapter {
                 candidate = baseUserId + '_' + suffix;
             }
 
-            // 프로필 이미지 URL이 있으면 MongoDB에 저장
+            // 최초 가입일 경우: 프로필 문서 먼저 만들고 FK 세팅(있을 때만)
             String profileImageId = null;
             if (pictureUrl != null && !pictureUrl.isBlank()) {
                 try {
                     ProfileImage profileImage = new ProfileImage();
-                    profileImage.setImageUrl(pictureUrl); // URL만 저장
+                    profileImage.setImageUrl(pictureUrl);
                     ProfileImage saved = profileImageRepository.save(profileImage);
                     profileImageId = saved.getId();
                     log.info("소셜 로그인 프로필 이미지 URL 저장 완료: {} (provider: {})", pictureUrl, provider);
                 } catch (Exception e) {
                     log.warn("프로필 이미지 URL 저장 실패: {}", e.getMessage());
-                    // 실패해도 계속 진행 (null로 저장)
                 }
             }
 
             User u = User.builder()
                     .userId(candidate)
-                    .password(encoder.encode(PasswordGenerator.random64())) // 소셜 계정 임시 난수 비번
+                    .password(encoder.encode(PasswordGenerator.random64()))
                     .email(email)
-                    .profileImageId(profileImageId) // URL이 저장된 이미지 ID 설정
+                    .profileImageId(profileImageId) // Mongo 문서 PK(FK)
                     .build();
             return userRepository.save(u);
         });
+
+        // (3) 기존 유저로 로그인한 경우에도 URL 동기화
+        syncProfileImage(user, pictureUrl);
 
         OAuth2Account account = new OAuth2Account();
         account.setProvider(provider);
@@ -92,4 +99,62 @@ public class OAuth2UserAdapter {
         account.setUser(user);
         oauthRepo.save(account);
     }
+
+    /**
+     * FK(users.profile_image_id)는 그대로 두고,
+     * Mongo 문서의 imageUrl만 최신으로 맞춘다.
+     * - FK가 있으면 해당 문서의 URL만 비교/갱신
+     * - FK가 없거나 깨졌으면 새 문서 생성 후 FK 1회 세팅
+     */
+    private void syncProfileImage(User user, String newUrl) {
+        if (newUrl == null || newUrl.isBlank()) return;
+
+        String mongoId = user.getProfileImageId();
+
+        if (mongoId != null && !mongoId.isBlank()) {
+            profileImageRepository.findById(mongoId).ifPresentOrElse(doc -> {
+                if (!newUrl.equals(doc.getImageUrl())) {
+                    doc.setImageUrl(newUrl);
+                    profileImageRepository.save(doc);
+                    log.info("Mongo URL 갱신 완료: uid={}, mongoId={}", user.getId(), mongoId);
+                }
+            }, () -> {
+                // 참조는 있는데 문서가 없으면(깨짐): 새로 만들고 FK 교체(한 번만)
+                ProfileImage created = new ProfileImage();
+                created.setImageUrl(newUrl);
+                created = profileImageRepository.save(created);
+                // setter가 없으니 복사-세이브(원본 구조 최소 변경)
+                User updated = User.builder()
+                        .id(user.getId())
+                        .userId(user.getUserId())
+                        .password(user.getPassword())
+                        .email(user.getEmail())
+                        .profileImageId(created.getId())
+                        .createdAt(user.getCreatedAt())
+                        .updatedAt(user.getUpdatedAt())
+                        .build();
+                userRepository.save(updated);
+                log.warn("깨진 FK 복구: {} -> {}", mongoId, created.getId());
+            });
+        } else {
+            // FK가 비어있으면 새 문서 생성 후 FK 1회 세팅
+            ProfileImage created = new ProfileImage();
+            created.setImageUrl(newUrl);
+            created = profileImageRepository.save(created);
+
+            User updated = User.builder()
+                    .id(user.getId())
+                    .userId(user.getUserId())
+                    .password(user.getPassword())
+                    .email(user.getEmail())
+                    .profileImageId(created.getId())
+                    .createdAt(user.getCreatedAt())
+                    .updatedAt(user.getUpdatedAt())
+                    .build();
+            userRepository.save(updated);
+
+            log.info("Mongo 최초 생성 & Maria FK 세팅: uid={}, mongoId={}", user.getId(), created.getId());
+        }
+    }
 }
+

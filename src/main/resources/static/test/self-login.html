@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>자체 로그인 (정적)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 720px; margin: 40px auto; }
+    label { display:block; margin: 10px 0 4px; }
+    input, button { padding: 8px; width: 100%; box-sizing: border-box; }
+    button { margin-top: 12px; }
+    pre { background:#f7f7f7; padding:12px; white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>자체 로그인</h2>
+  <form id="f" onsubmit="return false;">
+    <label>email</label><input id="email" type="email" required>
+    <label>password</label><input id="password" type="password" required>
+    <button type="button" onclick="login()">로그인</button>
+  </form>
+  <pre id="out"></pre>
+  <script>
+    async function login() {
+      const payload = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
+      };
+      const res = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const txt = await res.text();
+      document.getElementById('out').textContent = 'HTTP ' + res.status + '\n\n' + txt;
+    }
+  </script>
+</body>
+</html>
+
