@@ -23,9 +23,12 @@ public class AnalysisController {
             // TODO: Security 적용 후 @AuthenticationPrincipal 로 실제 로그인 사용자 ID를 가져와야 합니다.
             // 우선 테스트를 위해 userId를 요청 파라미터로 받습니다.
             @RequestParam("userId") Long userId,
-            @RequestParam("image") MultipartFile imageFile) {
+            @RequestParam("image") MultipartFile imageFile,
+            @RequestParam(value = "youtubeKeyword", required = false) String youtubeKeyword,
+            @RequestParam(value = "youtubeOrder", required = false, defaultValue = "relevance") String youtubeOrder) {
 
-        log.info("이미지 분석 요청 수신 - 사용자 ID: {}, 파일명: {}", userId, imageFile.getOriginalFilename());
+        log.info("이미지 분석 요청 수신 - 사용자 ID: {}, 파일명: {}, YouTube 키워드: {}, 정렬: {}", 
+                userId, imageFile.getOriginalFilename(), youtubeKeyword, youtubeOrder);
 
         // 파일 유효성 검증
         if (imageFile.isEmpty()) {
@@ -57,7 +60,14 @@ public class AnalysisController {
         }
 
         try {
-            FoodAnalysisResultDTO result = analysisService.analyzeImage(userId, imageFile);
+            FoodAnalysisResultDTO result;
+            if (youtubeKeyword != null && !youtubeKeyword.trim().isEmpty()) {
+                // YouTube 옵션이 있는 경우
+                result = analysisService.analyzeImage(userId, imageFile, youtubeKeyword, youtubeOrder);
+            } else {
+                // YouTube 옵션이 없는 경우 기본 메서드 호출
+                result = analysisService.analyzeImage(userId, imageFile);
+            }
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.error("이미지 분석 중 서버 내부 오류 발생", e);

@@ -68,10 +68,14 @@ public class AnalysisServiceImpl implements AnalysisService {
             NutritionData nutritionData = null;
             
             if (foodRefOptional.isPresent()) {
-                nutritionData = modelMapper.map(
-                    foodRefOptional.get().getNutritionInfo(), 
-                    NutritionData.class
-                );
+                var nutritionInfo = foodRefOptional.get().getNutritionInfo();
+                // ModelMapper 대신 직접 변환 (carbohydrate -> carbohydrates 필드명 차이)
+                nutritionData = NutritionData.builder()
+                        .calories(nutritionInfo.getCalories())
+                        .carbohydrates(nutritionInfo.getCarbohydrate()) // NutritionInfo의 carbohydrate를 carbohydrates로 매핑
+                        .protein(nutritionInfo.getProtein())
+                        .fat(nutritionInfo.getFat())
+                        .build();
                 log.info("{} 영양 정보 조회 성공", foodName);
             } else {
                 log.warn("{} 영양 정보를 찾을 수 없습니다. DB에 영양 정보를 추가해주세요.", foodName);
@@ -120,10 +124,12 @@ public class AnalysisServiceImpl implements AnalysisService {
                         .recognizedFoodName(foodName)
                         .accuracy(accuracyForDB) // 0.0 ~ 1.0 사이 값으로 저장
                         .youtubeRecipes(
-                                // YoutubeRecipeDto 리스트를 AnalysisHistory의 YoutubeRecipe 리스트로 변환
+                                // YoutubeRecipeDto 리스트를 AnalysisHistory의 YoutubeRecipe 리스트로 직접 변환
                                 youtubeRecipes.stream()
-                                        .map(dto ->
-                                                modelMapper.map(dto, AnalysisHistory.YoutubeRecipe.class))
+                                        .map(dto -> AnalysisHistory.YoutubeRecipe.builder()
+                                                .title(dto.getTitle())
+                                                .url(dto.getUrl())
+                                                .build())
                                         .collect(Collectors.toList())
                         )
                         .analysisDate(LocalDateTime.now())
@@ -164,6 +170,116 @@ public class AnalysisServiceImpl implements AnalysisService {
                     .build();
         }
     }
+    // YouTube 검색 옵션을 포함한 이미지 분석 메서드
+    @Override
+    public FoodAnalysisResultDTO analyzeImage(Long userId, MultipartFile image, String youtubeKeyword, String youtubeOrder) {
+        log.info("AnalysisService - analyzeImage 실행 (YouTube 옵션 포함)...");
+        log.info("사용자 ID: {}, YouTube 키워드: {}, 정렬: {}", userId, youtubeKeyword, youtubeOrder);
+
+        try {
+            // [STEP 1] Flask AI 서버로 이미지 전송 및 결과 수신
+            AiResponse aiResult = aiAnalysisService.analyzeImage(image);
+
+            String foodName = aiResult.getPredictedClass();
+            double accuracyForDB = aiResult.getConfidence() / 100.0;
+            log.info("AI 분석 결과: {} (정확도: {}%)", foodName, aiResult.getConfidence());
+
+            // [STEP 2] 인식된 음식 이름으로 FoodReference DB에서 영양 정보 조회 및 DTO 변환
+            Optional<FoodReference> foodRefOptional = foodReferenceRepository.findByFoodName(foodName);
+            NutritionData nutritionData = null;
+
+            if (foodRefOptional.isPresent()) {
+                var nutritionInfo = foodRefOptional.get().getNutritionInfo();
+                // ModelMapper 대신 직접 변환 (carbohydrate -> carbohydrates 필드명 차이)
+                nutritionData = NutritionData.builder()
+                        .calories(nutritionInfo.getCalories())
+                        .carbohydrates(nutritionInfo.getCarbohydrate()) // NutritionInfo의 carbohydrate를 carbohydrates로 매핑
+                        .protein(nutritionInfo.getProtein())
+                        .fat(nutritionInfo.getFat())
+                        .build();
+                log.info("{} 영양 정보 조회 성공", foodName);
+            } else {
+                log.warn("{} 영양 정보를 찾을 수 없습니다. DB에 영양 정보를 추가해주세요.", foodName);
+            }
+
+            // [STEP 3] 음식 이름과 사용자 키워드로 YouTube API 검색 (정렬 옵션 포함)
+            List<YoutubeRecipeDTO> youtubeRecipes = Collections.emptyList();
+            try {
+                youtubeRecipes = youtubeApiService.searchRecipes(foodName, youtubeKeyword, youtubeOrder);
+                log.info("{} 관련 유튜브 레시피 검색 완료: {}개 (키워드: {}, 정렬: {})",
+                        foodName, youtubeRecipes.size(), youtubeKeyword, youtubeOrder);
+            } catch (Exception e) {
+                log.warn("YouTube API 검색 실패 (계속 진행): {}", e.getMessage());
+                // YouTube API 실패해도 분석 결과는 반환
+            }
+
+            // [STEP 4] 원본 이미지를 학습용 DB에 저장
+            try {
+                FoodAnalysisData trainingData = FoodAnalysisData.builder()
+                        .foodCategory(foodName)
+                        .originalImageData(new Binary(image.getBytes()))
+                        .contentType(image.getContentType())
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                foodAnalysisDataRepository.save(trainingData);
+                log.info("학습용 원본 이미지 저장 완료. Category: {}", foodName);
+            } catch (IOException e) {
+                log.error("학습용 이미지 저장 실패", e);
+            }
+
+            // [STEP 5] 썸네일 생성 및 최종 분석 결과를 AnalysisHistory DB에 저장
+            try {
+                // 썸네일 생성: 256x256 크기로 리사이즈
+                byte[] thumbnailData = createThumbnail(image, 256);
+
+                AnalysisHistory history = AnalysisHistory.builder()
+                        .userId(userId)
+                        .thumbnailImageData(new Binary(thumbnailData))
+                        .thumbnailContentType(image.getContentType())
+                        .recognizedFoodName(foodName)
+                        .accuracy(accuracyForDB)
+                        .youtubeRecipes(
+                                // YoutubeRecipeDto 리스트를 AnalysisHistory의 YoutubeRecipe 리스트로 직접 변환
+                                youtubeRecipes.stream()
+                                        .map(dto -> AnalysisHistory.YoutubeRecipe.builder()
+                                                .title(dto.getTitle())
+                                                .url(dto.getUrl())
+                                                .build())
+                                        .collect(Collectors.toList())
+                        )
+                        .analysisDate(LocalDateTime.now())
+                        .build();
+
+                analysisHistoryRepository.save(history);
+                log.info("사용자 분석 기록 저장 완료. History ID: {}", history.getId());
+            } catch (IOException e) {
+                log.error("썸네일 생성 실패 (분석 결과는 반환): {}", e.getMessage());
+            } catch (Exception e) {
+                log.error("분석 기록 저장 실패 (분석 결과는 반환): {}", e.getMessage());
+            }
+
+            // [STEP 6] 조회 및 변환된 모든 데이터를 최종 FoodAnalysisResultDTO에 담아 반환
+            // accuracy는 Flask에서 반환한 confidence 값 그대로 사용 (0~100 범위)
+            return FoodAnalysisResultDTO.builder()
+                    .foodName(foodName)
+                    .accuracy(aiResult.getConfidence())
+                    .nutritionData(nutritionData)
+                    .youtubeRecipes(youtubeRecipes)
+                    .message("분석 완료")
+                    .build();
+
+        } catch (Exception e) {
+            log.error("이미지 분석 중 오류 발생", e);
+            return FoodAnalysisResultDTO.builder()
+                    .foodName("N/A")
+                    .accuracy(0.0)
+                    .nutritionData(null)
+                    .youtubeRecipes(List.of())
+                    .message("분석 중 오류 발생: " + e.getMessage())
+                    .build();
+        }
+    }
+
     // 썸네일 생성을 담당하는 헬퍼(helper) 메소드
     private byte[] createThumbnail(MultipartFile image, int size) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
