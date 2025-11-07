@@ -55,6 +55,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/analysis/**").permitAll()
                 // 혹시 클라이언트가 /api/auth/** 로 부르면 이것도 같이 열어두기
                 .requestMatchers("/api/auth/**").permitAll()
+                // 관리자 페이지 API는 개발 환경에서 인증 없이 접근 가능하도록 설정
+                .requestMatchers("/api/admin/**").permitAll()
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
                 .anyRequest().authenticated()
 

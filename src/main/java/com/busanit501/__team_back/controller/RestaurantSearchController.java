@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 // ... (나머지 import) ...
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ import java.util.List;
 @RequestMapping("/api/map")
 @RequiredArgsConstructor
 @Log4j2
+@CrossOrigin(origins = "*") // CORS 허용 (개발 환경)
 public class RestaurantSearchController {
 
     // 주입된 Service 변수명: restaurantSearchService
