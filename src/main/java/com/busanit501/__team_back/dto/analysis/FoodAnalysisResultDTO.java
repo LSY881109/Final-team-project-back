@@ -1,5 +1,6 @@
 package com.busanit501.__team_back.dto.analysis;
 
+import com.busanit501.__team_back.dto.ai.Top3Prediction;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,9 @@ public class FoodAnalysisResultDTO {
     // (AI 담당 팀원과 최종 필드명 협의 필요)
     private String foodName;    // 예: AI가 분석한 음식 이름
     private Double accuracy;    // 예: 정확도
+    
+    // 상위 3개 예측 결과 (Flask에서 반환)
+    private List<Top3Prediction> top3;
 
     // 기존 Flask 서버 분석 결과 (AI 인식) - 주석 처리
     // private String recognizedFoodName;
@@ -34,6 +38,9 @@ public class FoodAnalysisResultDTO {
 
     // 유튜브 레시피 정보
     private List<YoutubeRecipeDTO> youtubeRecipes;
+
+    // 분석 이력 ID (YouTube 레시피 클릭 시 저장에 사용)
+    private String historyId;
 
     // 기존 백엔드 처리/DB 연동 결과 (추가 정보) - 주석 처리
     // private Integer totalCalories;

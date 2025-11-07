@@ -11,7 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 /**
@@ -32,6 +31,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        // 인증이 필요하지 않은 경로는 필터를 건너뜀
+        String requestPath = request.getRequestURI();
+        if (requestPath.startsWith("/api/analysis/") || 
+            requestPath.startsWith("/api/users/signup") ||
+            requestPath.startsWith("/api/users/login") ||
+            requestPath.startsWith("/api/youtube/") ||
+            requestPath.startsWith("/api/map/") ||
+            requestPath.startsWith("/api/food-images/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 1. Request Header에서 JWT 토큰 추출
         String jwt = resolveToken(request);

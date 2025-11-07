@@ -11,6 +11,7 @@ import java.util.List;
 
 @Document(collection = "analysis_histories")
 @Getter
+@Setter // YouTube 레시피 저장을 위해 추가
 @Builder
 @AllArgsConstructor // Builder를 위해 추가
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,6 +36,7 @@ public class AnalysisHistory {
     private LocalDateTime analysisDate; // 분석 요청 시간
 
     @Getter
+    @Setter // MongoDB 매핑을 위해 추가
     @Builder
     @AllArgsConstructor // Builder를 위해 추가
     @NoArgsConstructor // ModelMapper 등을 위해 추가
