@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/analysis")
 @RequiredArgsConstructor
 @Log4j2
+@CrossOrigin(origins = "*") // CORS 허용 (개발 환경)
 public class AnalysisController {
 
     private final AnalysisService analysisService;
@@ -41,10 +42,21 @@ public class AnalysisController {
 
         // 파일 타입 검증 (이미지 파일만 허용)
         String contentType = imageFile.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
+        String originalFilename = imageFile.getOriginalFilename();
+        
+        // Content-Type과 파일 확장자 모두 확인
+        boolean isImageByContentType = contentType != null && contentType.startsWith("image/");
+        boolean isImageByExtension = originalFilename != null && 
+            (originalFilename.toLowerCase().endsWith(".jpg") || 
+             originalFilename.toLowerCase().endsWith(".jpeg") ||
+             originalFilename.toLowerCase().endsWith(".png") ||
+             originalFilename.toLowerCase().endsWith(".gif") ||
+             originalFilename.toLowerCase().endsWith(".webp"));
+        
+        if (!isImageByContentType && !isImageByExtension) {
             return ResponseEntity.badRequest().body(
                 FoodAnalysisResultDTO.builder()
-                    .message("이미지 파일만 업로드 가능합니다. 현재 파일 타입: " + contentType)
+                    .message("이미지 파일만 업로드 가능합니다. 현재 파일 타입: " + contentType + ", 파일명: " + originalFilename)
                     .build()
             );
         }

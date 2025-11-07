@@ -1,7 +1,9 @@
 package com.busanit501.__team_back.entity.MongoDB;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * FoodReference에 포함될 영양 정보 (임베디드 도큐먼트)
@@ -9,6 +11,8 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class NutritionInfo {
     private double calories; // 칼로리 (kcal단위)
     private double carbohydrate; // 탄수화물 (g단위)
