@@ -53,6 +53,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
                 // 이미지 분석 API는 테스트를 위해 인증 없이 접근 가능하도록 설정 (개발 환경)
                 .requestMatchers("/api/analysis/**").permitAll()
+                // 혹시 클라이언트가 /api/auth/** 로 부르면 이것도 같이 열어두기
+                .requestMatchers("/api/auth/**").permitAll()
                 // YouTube 검색 API는 개발 환경에서 인증 없이 접근 가능 (프로덕션에서는 인증 필요)
                 // ⚠️ 프로덕션 배포 시: 아래 줄을 주석 처리하여 인증이 필요하도록 변경
                 .requestMatchers("/api/youtube/**").permitAll()
@@ -84,32 +86,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // ⚠️ 개발 환경: 모든 Origin 허용 (Flutter 앱은 Origin이 null일 수 있음)
-        // ⚠️ 프로덕션 배포 시: 아래 주석 처리하고 특정 Origin만 허용하도록 변경 필수!
-        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // 개발 환경: 모든 Origin 허용
-        
-        // 프로덕션 환경에서는 아래처럼 특정 Origin만 허용하도록 변경:
-        // configuration.setAllowedOrigins(Arrays.asList(
-        //         "https://your-production-domain.com",  // 프로덕션 도메인
-        //         "https://www.your-production-domain.com"
-        // ));
-        // 개발 환경용 예시 (주석 처리됨):
-        // configuration.setAllowedOrigins(Arrays.asList(
-        //         "http://localhost:5173",           // React 개발 서버
-        //         "http://127.0.0.1:8080",          // Flutter iOS 시뮬레이터
-        //         "http://localhost:8080",          // Flutter (일부 환경)
-        //         "http://10.0.2.2:8080"            // Flutter Android 에뮬레이터
-        // ));
-        
+        // React 개발 서버 포트들 허용
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        // allowCredentials는 와일드카드와 함께 사용 시 문제가 될 수 있으므로 false로 설정
-        // JWT 토큰은 Authorization 헤더로 전송되므로 credentials가 필요 없음
-        configuration.setAllowCredentials(false);
-        // Preflight 요청 캐시 시간 (초)
-        configuration.setMaxAge(3600L);
-        
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);
         return source;
