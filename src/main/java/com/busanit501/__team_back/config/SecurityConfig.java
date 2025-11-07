@@ -53,6 +53,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
                 // 이미지 분석 API는 테스트를 위해 인증 없이 접근 가능하도록 설정
                 .requestMatchers("/api/analysis/**").permitAll()
+                // 혹시 클라이언트가 /api/auth/** 로 부르면 이것도 같이 열어두기
+                .requestMatchers("/api/auth/**").permitAll()
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
                 .anyRequest().authenticated()
 
