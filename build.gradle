@@ -123,6 +123,8 @@ dependencies {
 // Querydsl 생성을 위한 task 설정 추가: Q-Class 생성 경로 지정
 tasks.withType(JavaCompile).configureEach {
     options.generatedSourceOutputDirectory.set(file(project.buildDir.path + "/generated"))
+    // Spring이 메서드 파라미터 이름을 인식할 수 있도록 -parameters 플래그 추가
+    options.compilerArgs.add('-parameters')
 }
 
 // 테스트 설정 유지
