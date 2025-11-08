@@ -35,11 +35,27 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
             // 2️⃣ Flutter 앱으로 리다이렉트
             String redirect = APP_SCHEME + "?access=" + access + "&refresh=" + refresh;
-            log.debug("OAuth2 success → {}", redirect);
-            response.sendRedirect(redirect);
+            log.info("✅ OAuth2 로그인 성공 - 리다이렉트 URL: {}", redirect);
+            log.info("   Access Token 길이: {} bytes", access.length());
+            log.info("   Refresh Token 길이: {} bytes", refresh.length());
+            
+            // 브라우저가 커스텀 스킴을 처리할 수 있도록 Content-Type 설정
+            response.setContentType("text/html;charset=UTF-8");
+            response.setStatus(HttpServletResponse.SC_OK);
+            
+            // HTML로 리다이렉트 (브라우저 호환성)
+            String html = String.format(
+                "<!DOCTYPE html><html><head><meta charset='UTF-8'>" +
+                "<script>window.location.href='%s';</script>" +
+                "<meta http-equiv='refresh' content='0;url=%s'>" +
+                "</head><body><p>로그인 중...</p><a href='%s'>앱으로 이동</a></body></html>",
+                redirect, redirect, redirect
+            );
+            response.getWriter().write(html);
+            response.getWriter().flush();
 
         } catch (Exception e) {
-            log.error("OAuth2 success handler error", e);
+            log.error("❌ OAuth2 success handler error", e);
             try {
                 response.sendRedirect("/");
             } catch (Exception ignore) {}
