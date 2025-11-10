@@ -57,7 +57,10 @@ public class SecurityConfig {
                 // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
                 .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
                 // 이미지 분석 API는 테스트를 위해 인증 없이 접근 가능하도록 설정 (개발 환경)
-                .requestMatchers("/api/analysis/**").permitAll()
+                // 단, /api/analysis/history와 /api/analysis/youtube-recipe/click은 인증 필요
+                // ⚠️ 순서 중요: 더 구체적인 경로를 먼저 선언해야 함
+                .requestMatchers("/api/analysis/history", "/api/analysis/youtube-recipe/click").authenticated()
+                .requestMatchers("/api/analysis", "/api/analysis/**").permitAll()
                 // 혹시 클라이언트가 /api/auth/** 로 부르면 이것도 같이 열어두기
                 .requestMatchers("/api/auth/**").permitAll()
                 // YouTube 검색 API는 개발 환경에서 인증 없이 접근 가능 (프로덕션에서는 인증 필요)
