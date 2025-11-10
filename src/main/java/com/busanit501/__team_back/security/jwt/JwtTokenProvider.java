@@ -63,8 +63,10 @@ public class JwtTokenProvider {
         Date refreshTokenExpiresIn = new Date(now + Long.parseLong(REFRESH_TOKEN_EXPIRE_TIME));
 
         // 2. [수정] Access Token 생성 시, authorities가 비어있지 않을 때만 claim에 추가
+        String subject = authentication.getName();
+        log.info("🔍 JWT 토큰 생성 - authentication.getName(): {}", subject);
         io.jsonwebtoken.JwtBuilder accessTokenBuilder = Jwts.builder()
-                .setSubject(authentication.getName())
+                .setSubject(subject)
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256);
 

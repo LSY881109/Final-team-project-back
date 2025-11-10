@@ -13,6 +13,7 @@ import com.busanit501.__team_back.repository.maria.UserReadRepository;
 import com.busanit501.__team_back.entity.MariaDB.OAuth2Account;
 import com.busanit501.__team_back.repository.maria.OAuth2AccountRepository;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,11 +38,10 @@ public class OAuth2UserAdapter {
     }
 
     @Transactional
-    public void upsertLinkAndEnsureUser(Map<String, Object> mapped) {
+    public String upsertLinkAndEnsureUser(Map<String, Object> mapped) {
         String provider = (String) mapped.get("provider");
         String providerId = (String) mapped.get("providerId");
         String email = (String) mapped.get("email");
-        String name = (String) mapped.getOrDefault("name", "User");
         String pictureUrl = (String) mapped.get("picture"); // 네이버/구글 프로필 이미지 URL
 
         Optional<OAuth2Account> link = oauthRepo.findByProviderAndProviderId(provider, providerId);
@@ -50,7 +50,7 @@ public class OAuth2UserAdapter {
         if (link.isPresent()) {
             User linkedUser = link.get().getUser();
             syncProfileImage(linkedUser, pictureUrl);
-            return;
+            return linkedUser.getUserId(); // userId 반환
         }
 
         if (email == null || email.isBlank()) {
@@ -66,6 +66,8 @@ public class OAuth2UserAdapter {
                 suffix++;
                 candidate = baseUserId + '_' + suffix;
             }
+
+            log.info("🔍 OAuth2 신규 사용자 생성 - email: {}, provider: {}, 생성될 userId: {}", email, provider, candidate);
 
             // 최초 가입일 경우: 프로필 문서 먼저 만들고 FK 세팅(있을 때만)
             String profileImageId = null;
@@ -87,17 +89,47 @@ public class OAuth2UserAdapter {
                     .email(email)
                     .profileImageId(profileImageId) // Mongo 문서 PK(FK)
                     .build();
-            return userRepository.save(u);
+            User savedUser = userRepository.save(u);
+            log.info("🔍 OAuth2 신규 사용자 저장 완료 - DB userId: {}", savedUser.getUserId());
+            return savedUser;
         });
+        
+        if (user != null) {
+            log.info("🔍 OAuth2 기존 사용자 조회 - email: {}, provider: {}, DB userId: {}", email, provider, user.getUserId());
+        }
 
         // (3) 기존 유저로 로그인한 경우에도 URL 동기화
         syncProfileImage(user, pictureUrl);
 
-        OAuth2Account account = new OAuth2Account();
-        account.setProvider(provider);
-        account.setProviderId(providerId);
-        account.setUser(user);
-        oauthRepo.save(account);
+        // (4) 해당 User가 이미 같은 provider로 OAuth2Account를 가지고 있는지 확인
+        List<OAuth2Account> existingAccounts = oauthRepo.findByUser(user);
+        boolean alreadyLinked = existingAccounts.stream()
+                .anyMatch(acc -> provider.equals(acc.getProvider()));
+        
+        if (!alreadyLinked) {
+            // 같은 provider로 연결된 계정이 없을 때만 새로 저장
+            OAuth2Account account = new OAuth2Account();
+            account.setProvider(provider);
+            account.setProviderId(providerId);
+            account.setUser(user);
+            OAuth2Account savedAccount = oauthRepo.save(account);
+            
+            // 🔍 로깅: users 테이블과 oauth2_account 테이블의 관계 확인
+            log.info("✅ OAuth2 계정 연결 완료:");
+            log.info("   users.id (PK, Long): {}", user.getId());
+            log.info("   users.user_id (String): {}", user.getUserId());
+            log.info("   oauth2_account.id (PK): {}", savedAccount.getId());
+            log.info("   oauth2_account.user_id (FK → users.id): {}", user.getId());
+            log.info("   provider: {}, providerId: {}", provider, providerId);
+            log.info("   ✅ oauth2_account.user_id는 users.id (Long)를 참조해야 합니다!");
+        } else {
+            log.info("이미 연결된 OAuth2 계정: userId={}, provider={}", user.getUserId(), provider);
+        }
+        
+        // userId 반환 (JWT의 sub로 사용)
+        String finalUserId = user.getUserId();
+        log.info("🔍 OAuth2 최종 반환 userId: {} (DB에 저장된 값)", finalUserId);
+        return finalUserId;
     }
 
     /**

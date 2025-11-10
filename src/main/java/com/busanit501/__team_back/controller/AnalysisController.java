@@ -79,12 +79,29 @@ public class AnalysisController {
     // 이미지 분석 요청 처리
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FoodAnalysisResultDTO> analyzeImage(
-            // TODO: Security 적용 후 @AuthenticationPrincipal 로 실제 로그인 사용자 ID를 가져와야 합니다.
-            // 우선 테스트를 위해 userId를 요청 파라미터로 받습니다.
-            @RequestParam("userId") Long userId,
+            // JWT 토큰에서 현재 로그인한 사용자 ID를 자동으로 추출합니다.
+            @RequestParam(value = "userId", required = false) Long userIdParam, // 하위 호환성을 위해 유지 (선택적)
             @RequestParam("image") MultipartFile imageFile,
             @RequestParam(value = "youtubeKeyword", required = false) String youtubeKeyword,
             @RequestParam(value = "youtubeOrder", required = false, defaultValue = "relevance") String youtubeOrder) {
+
+        // JWT 토큰에서 현재 로그인한 사용자 ID 추출
+        Long userId = getCurrentUserId();
+        
+        // JWT 토큰에서 userId를 가져올 수 없는 경우, 파라미터로 전달된 userId 사용 (하위 호환성)
+        if (userId == null && userIdParam != null) {
+            userId = userIdParam;
+            log.warn("JWT 토큰에서 사용자 ID를 추출할 수 없어 파라미터로 전달된 userId를 사용합니다: {}", userId);
+        }
+        
+        if (userId == null) {
+            log.warn("사용자 ID를 확인할 수 없습니다. 인증이 필요합니다.");
+            return ResponseEntity.status(401).body(
+                FoodAnalysisResultDTO.builder()
+                    .message("인증이 필요합니다. 로그인 후 다시 시도해주세요.")
+                    .build()
+            );
+        }
 
         log.info("이미지 분석 요청 수신 - 사용자 ID: {}, 파일명: {}, YouTube 키워드: {}, 정렬: {}", 
                 userId, imageFile.getOriginalFilename(), youtubeKeyword, youtubeOrder);
