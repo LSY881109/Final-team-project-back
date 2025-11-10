@@ -17,4 +17,6 @@ public class RestaurantInfo {
     private double longitude;   // 경도
     private double rating;      // 평점 (있을 경우)
     private String placeId;     // Google Place ID (클라이언트에서 상세정보 요청 시 사용)
+    private String phoneNumber; // 전화번호
+    private String website;     // 웹사이트
 }
