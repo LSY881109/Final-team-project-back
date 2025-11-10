@@ -66,6 +66,8 @@ public class SecurityConfig {
                 // YouTube 검색 API는 개발 환경에서 인증 없이 접근 가능 (프로덕션에서는 인증 필요)
                 // ⚠️ 프로덕션 배포 시: 아래 줄을 주석 처리하여 인증이 필요하도록 변경
                 .requestMatchers("/api/youtube/**").permitAll()
+                // 영양소 정보 조회 API는 누구나 접근 가능
+                .requestMatchers("/api/admin/food-references").permitAll()
                 // 관리자 페이지 API는 개발 환경에서 인증 없이 접근 가능하도록 설정
                 .requestMatchers("/api/admin/**").permitAll()
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
