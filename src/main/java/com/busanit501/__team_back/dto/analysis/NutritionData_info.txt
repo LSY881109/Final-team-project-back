@@ -1,0 +1,24 @@
+# NutritionData 클래스 설명
+
+`NutritionData`는 음식의 상세 영양 정보를 담기 위한 DTO(Data Transfer Object)입니다.
+
+`FoodReference` Entity에서 조회된 영양 정보가 이 DTO로 변환되어 `FoodAnalysisResultDTO`에 포함됩니다.
+
+---
+
+## 1. 필드 정보
+
+-   `private Double calories;`
+    -   **설명:** 칼로리 (kcal)
+
+-   `private Double protein;`
+    -   **설명:** 단백질 (g)
+
+-   `private Double fat;`
+    -   **설명:** 지방 (g)
+
+-   `private Double carbohydrates;`
+    -   **설명:** 탄수화물 (g)
+
+---
+

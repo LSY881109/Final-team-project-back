@@ -8,9 +8,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 
 /**
@@ -19,6 +19,7 @@ import java.io.IOException;
  */
 @Log4j2
 @RequiredArgsConstructor
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 토큰 생성/검증 로직을 가진 Provider를 주입받습니다.
@@ -30,6 +31,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        // 인증이 필요하지 않은 경로는 필터를 건너뜀
+        String requestPath = request.getRequestURI();
+        if (requestPath.startsWith("/api/analysis/") || 
+            requestPath.startsWith("/api/users/signup") ||
+            requestPath.startsWith("/api/users/login") ||
+            requestPath.startsWith("/api/youtube/") ||
+            requestPath.startsWith("/api/map/") ||
+            requestPath.startsWith("/api/food-images/") ||
+            requestPath.startsWith("/oauth2/authorization/") ||
+            requestPath.startsWith("/login/oauth2/code/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 1. Request Header에서 JWT 토큰 추출
         String jwt = resolveToken(request);

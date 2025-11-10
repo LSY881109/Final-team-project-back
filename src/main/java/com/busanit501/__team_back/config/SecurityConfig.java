@@ -3,73 +3,104 @@ package com.busanit501.__team_back.config;
 import com.busanit501.__team_back.security.jwt.JwtAuthenticationFilter;
 import com.busanit501.__team_back.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/**
- * Spring Security 핵심 설정 클래스
- */
+import java.util.Arrays;
+
+import com.busanit501.__team_back.security.oauth.CustomOAuth2UserService;
+import com.busanit501.__team_back.security.oauth.OAuth2LoginSuccessHandler;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@Log4j2
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    /**
-     * 비밀번호 암호화 빈 등록
-     */
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // CSRF 비활성화 (Stateless 서버이므로)
+        http.csrf(csrf ->
+                csrf.disable());
+
+        // CORS 설정 (WebConfig에서 설정했다면 여기서도 적용해주는 것이 좋음)
+        http.cors(cors ->
+                cors.configurationSource(corsConfigurationSource()));
+
+        // 세션을 사용하지 않도록 설정 (Stateless)
+        http.sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        // API 경로별 접근 권한 설정
+        http.authorizeHttpRequests(authorize -> authorize
+                // [핵심] '/api/users/signup' 경로는 누구나 접근 가능하도록 허용
+                .requestMatchers("/api/users/signup").permitAll()
+                // 추가: 소셜 로그인 및 정적 자원 허용
+                .requestMatchers("/", "/login", "/error", "/oauth2/authorization/**", "/css/**", "/js/**", "/images/**").permitAll()
+                // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
+                .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
+                // 이미지 분석 API는 테스트를 위해 인증 없이 접근 가능하도록 설정 (개발 환경)
+                .requestMatchers("/api/analysis/**").permitAll()
+                // 혹시 클라이언트가 /api/auth/** 로 부르면 이것도 같이 열어두기
+                .requestMatchers("/api/auth/**").permitAll()
+                // YouTube 검색 API는 개발 환경에서 인증 없이 접근 가능 (프로덕션에서는 인증 필요)
+                // ⚠️ 프로덕션 배포 시: 아래 줄을 주석 처리하여 인증이 필요하도록 변경
+                .requestMatchers("/api/youtube/**").permitAll()
+                // 관리자 페이지 API는 개발 환경에서 인증 없이 접근 가능하도록 설정
+                .requestMatchers("/api/admin/**").permitAll()
+                // 그 외의 모든 요청은 인증된 사용자만 접근 가능
+                .anyRequest().authenticated()
+
+        );
+
+        // 추가: OAuth2 Login 설정 (ApplicationContext에서 Bean 획득, 기존 체이닝 유지)
+        var appCtx = http.getSharedObject(org.springframework.context.ApplicationContext.class);
+        CustomOAuth2UserService customOAuth2UserService = appCtx.getBean(CustomOAuth2UserService.class);
+        OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler = appCtx.getBean(OAuth2LoginSuccessHandler.class);
+        http.oauth2Login(o -> o
+                .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
+                .successHandler(oAuth2LoginSuccessHandler)
+        );
+
+        // TODO: JWT 필터를 추가하는 로직이 여기에 있을 것입니다.
+        // http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        // JWT필터
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    // CORS정책
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // React 개발 서버 포트들 허용
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173"
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
+    }
+
+    // PasswordEncoder Bean
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    /**
-     * AuthenticationManager 빈 등록 (AuthService에서 사용)
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    /**
-     * 보안 필터 체인 구성
-     */
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        // 1. CSRF, Session 비활성화 및 StateLess 설정
-        http.csrf(AbstractHttpConfigurer::disable);
-        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-        // 2. 인증이 필요한 요청과 그렇지 않은 요청 설정
-        http.authorizeHttpRequests(authorize -> authorize
-                // 회원가입, 로그인 API, Swagger UI는 인증 없이도 접근 허용
-                .requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // 나머지 모든 요청은 인증(JWT 토큰)이 필요합니다.
-                .anyRequest().authenticated()
-        );
-
-        // 3. JWT 인증 필터를 UsernamePasswordAuthenticationFilter 이전에 추가
-        http.addFilterBefore(
-                new JwtAuthenticationFilter(jwtTokenProvider),
-                UsernamePasswordAuthenticationFilter.class
-        );
-
-        log.info("Spring Security 설정이 JWT 필터와 함께 최종적으로 마무리되었습니다.");
-
-        return http.build();
     }
 }
