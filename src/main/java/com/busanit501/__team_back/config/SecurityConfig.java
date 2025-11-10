@@ -48,7 +48,12 @@ public class SecurityConfig {
                 // [핵심] '/api/users/signup' 경로는 누구나 접근 가능하도록 허용
                 .requestMatchers("/api/users/signup").permitAll()
                 // 추가: 소셜 로그인 및 정적 자원 허용
-                .requestMatchers("/", "/login", "/error", "/oauth2/authorization/**", "/css/**", "/js/**", "/images/**").permitAll()
+                // OAuth2 리다이렉트 경로 추가: /login/oauth2/code/{provider}
+                // 정적 리소스 (favicon, apple-touch-icon 등) 허용
+                .requestMatchers("/", "/login", "/error", "/oauth2/authorization/**", "/login/oauth2/code/**", 
+                        "/css/**", "/js/**", "/images/**", 
+                        "/favicon.ico", "/apple-touch-icon.png", "/apple-touch-icon-precomposed.png",
+                        "/robots.txt", "/sitemap.xml").permitAll()
                 // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
                 .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
                 // 이미지 분석 API는 테스트를 위해 인증 없이 접근 가능하도록 설정 (개발 환경)
