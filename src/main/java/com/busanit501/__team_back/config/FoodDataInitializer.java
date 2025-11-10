@@ -9,11 +9,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 /**
- * 애플리케이션 시작 시 음식 영양 정보 데이터를 자동으로 삽입하는 초기화 클래스
+ * Initialization class that automatically inserts food nutrition data when the application starts
  * 
- * 사용법:
- * 1. 이 클래스를 활성화하려면 @Component 어노테이션을 유지
- * 2. 비활성화하려면 @Component를 주석 처리
+ * Usage:
+ * 1. To activate this class, keep the @Component annotation
+ * 2. To deactivate, comment out the @Component annotation
  */
 @Component
 @RequiredArgsConstructor
@@ -24,9 +24,9 @@ public class FoodDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("음식 영양 정보 데이터 초기화 시작...");
+        log.info("Starting food nutrition data initialization...");
 
-        // 음식 데이터 배열
+        // Food data array
         FoodData[] foods = {
             new FoodData("숯불치킨", 1900.0, 195.0, 90.0, 40.0),
             new FoodData("양념치킨", 2650.0, 190.0, 90.0, 130.0),
@@ -40,7 +40,7 @@ public class FoodDataInitializer implements CommandLineRunner {
 
         for (FoodData food : foods) {
             try {
-                // 영양 정보 생성
+                // Create nutrition data
                 NutritionData nutritionData = NutritionData.builder()
                         .calories(food.calories)
                         .protein(food.protein)
@@ -48,30 +48,30 @@ public class FoodDataInitializer implements CommandLineRunner {
                         .carbohydrates(food.carbohydrates)
                         .build();
 
-                // DTO 생성
+                // Create DTO
                 FoodReferenceDTO dto = FoodReferenceDTO.builder()
                         .foodName(food.name)
                         .nutritionData(nutritionData)
                         .build();
 
-                // 저장 시도
+                // Attempt to save
                 foodReferenceService.createFoodReference(dto);
-                log.info("✅ 음식 데이터 삽입 성공: {}", food.name);
+                log.info("Food data inserted successfully: {}", food.name);
                 successCount++;
             } catch (IllegalArgumentException e) {
-                // 이미 존재하는 경우 스킵
-                log.warn("⚠️ 음식 데이터 이미 존재: {} - {}", food.name, e.getMessage());
+                // Skip if already exists
+                log.warn("Food data already exists: {} - {}", food.name, e.getMessage());
                 skipCount++;
             } catch (Exception e) {
-                log.error("❌ 음식 데이터 삽입 실패: {} - {}", food.name, e.getMessage());
+                log.error("Failed to insert food data: {} - {}", food.name, e.getMessage());
             }
         }
 
-        log.info("음식 영양 정보 데이터 초기화 완료 - 성공: {}, 스킵: {}", successCount, skipCount);
+        log.info("Food nutrition data initialization completed - Success: {}, Skipped: {}", successCount, skipCount);
     }
 
     /**
-     * 음식 데이터를 담는 내부 클래스
+     * Inner class to hold food data
      */
     private static class FoodData {
         String name;
@@ -89,5 +89,7 @@ public class FoodDataInitializer implements CommandLineRunner {
         }
     }
 }
+
+
 
 
