@@ -48,11 +48,28 @@ public class SecurityConfig {
                 // [핵심] '/api/users/signup' 경로는 누구나 접근 가능하도록 허용
                 .requestMatchers("/api/users/signup").permitAll()
                 // 추가: 소셜 로그인 및 정적 자원 허용
-                .requestMatchers("/", "/login", "/oauth2/authorization/**", "/css/**", "/js/**", "/images/**").permitAll()
+                // OAuth2 리다이렉트 경로 추가: /login/oauth2/code/{provider}
+                // 정적 리소스 (favicon, apple-touch-icon 등) 허용
+                .requestMatchers("/", "/login", "/error", "/oauth2/authorization/**", "/login/oauth2/code/**", 
+                        "/css/**", "/js/**", "/images/**", 
+                        "/favicon.ico", "/apple-touch-icon.png", "/apple-touch-icon-precomposed.png",
+                        "/robots.txt", "/sitemap.xml").permitAll()
                 // '/api/users/signup' 회원가입,로그인 경로는 누구나 접근 가능하도록
                 .requestMatchers("/api/users/signup", "/api/users/login", "/api/map/**","/api/food-images/**").permitAll()
-                // 이미지 분석 API는 테스트를 위해 인증 없이 접근 가능하도록 설정
-                .requestMatchers("/api/analysis/**").permitAll()
+                // 이미지 분석 API는 테스트를 위해 인증 없이 접근 가능하도록 설정 (개발 환경)
+                // 단, /api/analysis/history와 /api/analysis/youtube-recipe/click은 인증 필요
+                // ⚠️ 순서 중요: 더 구체적인 경로를 먼저 선언해야 함
+                .requestMatchers("/api/analysis/history", "/api/analysis/youtube-recipe/click").authenticated()
+                .requestMatchers("/api/analysis", "/api/analysis/**").permitAll()
+                // 혹시 클라이언트가 /api/auth/** 로 부르면 이것도 같이 열어두기
+                .requestMatchers("/api/auth/**").permitAll()
+                // YouTube 검색 API는 개발 환경에서 인증 없이 접근 가능 (프로덕션에서는 인증 필요)
+                // ⚠️ 프로덕션 배포 시: 아래 줄을 주석 처리하여 인증이 필요하도록 변경
+                .requestMatchers("/api/youtube/**").permitAll()
+                // 영양소 정보 조회 API는 누구나 접근 가능
+                .requestMatchers("/api/admin/food-references").permitAll()
+                // 관리자 페이지 API는 개발 환경에서 인증 없이 접근 가능하도록 설정
+                .requestMatchers("/api/admin/**").permitAll()
                 // 그 외의 모든 요청은 인증된 사용자만 접근 가능
                 .anyRequest().authenticated()
 
@@ -79,7 +96,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // 프론트엔드 주소
+        // React 개발 서버 포트들 허용
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

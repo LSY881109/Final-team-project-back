@@ -4,16 +4,18 @@ spring:
       client:
         registration:
           google:
-            client-id: "5"
-            client-secret: "G"
+            client-id: "${GOOGLE_CLIENT_ID:your-google-client-id}"
+            client-secret: "${GOOGLE_CLIENT_SECRET:your-google-client-secret}"
             scope: profile, email
-            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
+            # ⚠️ ngrok 사용 시: ngrok URL을 직접 지정
+            redirect-uri: 'https://sterling-jay-well.ngrok-free.app/login/oauth2/code/google'
             client-authentication-method: client_secret_post
           naver:
-            client-id: "Z"
-            client-secret: "l"
+            client-id: RWlkraxniAGcuJga5z1g
+            client-secret: cLTIIpGA2c
             client-name: Naver
             authorization-grant-type: authorization_code
+            # ⚠️ ngrok 사용 시: ngrok URL을 직접 지정
             redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
             scope: name, email, profile_image
         provider:

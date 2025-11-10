@@ -11,7 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 /**
@@ -33,8 +32,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        // 인증이 필요하지 않은 경로는 필터를 건너뜀
+        // 단, /api/analysis/history는 인증이 필요하므로 필터를 실행
+        String requestPath = request.getRequestURI();
+        if (requestPath.startsWith("/api/users/signup") ||
+            requestPath.startsWith("/api/users/login") ||
+            requestPath.startsWith("/api/youtube/") ||
+            requestPath.startsWith("/api/map/") ||
+            requestPath.startsWith("/api/food-images/") ||
+            requestPath.startsWith("/oauth2/authorization/") ||
+            requestPath.startsWith("/login/oauth2/code/") ||
+            // /api/analysis/history를 제외한 다른 analysis 경로는 인증 불필요
+            (requestPath.startsWith("/api/analysis/") && !requestPath.equals("/api/analysis/history") && !requestPath.startsWith("/api/analysis/youtube-recipe/click"))) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // 1. Request Header에서 JWT 토큰 추출
         String jwt = resolveToken(request);
+        
+        log.info("JWT 필터 실행 - 경로: {}, 토큰 존재: {}", requestPath, StringUtils.hasText(jwt));
 
         // 2. 토큰 유효성 검사
         if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
@@ -48,7 +65,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 주의: JwtTokenProvider에는 getUserEmailFromToken() 메서드가 없으므로,
             // 로그는 토큰 검증 성공까지만 기록합니다. (이전 코드 수정)
-            log.info("JWT 토큰 인증 성공 및 SecurityContext에 설정 완료.");
+            log.info("JWT 토큰 인증 성공 및 SecurityContext에 설정 완료. 사용자: {}", authentication.getName());
+        } else {
+            log.warn("JWT 토큰이 없거나 유효하지 않습니다. 경로: {}", requestPath);
         }
 
         // 다음 필터로 요청을 전달

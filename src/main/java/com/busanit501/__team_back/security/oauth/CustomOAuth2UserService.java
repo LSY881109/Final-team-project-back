@@ -31,14 +31,26 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         Map<String, Object> attributes = user.getAttributes();
 
         Map<String, Object> mapped = mapAttributes(registrationId, attributes);
-        // DB upsert & 연결 (기존 UserService/Repository 변경 없이 내부 어댑터에서 처리)
-        oAuth2UserAdapter.upsertLinkAndEnsureUser(mapped);
+        // DB upsert & 연결하고 userId 반환 (DB에 저장된 실제 userId)
+        String dbUserId = oAuth2UserAdapter.upsertLinkAndEnsureUser(mapped);
+        
+        // DB의 userId를 attributes에 추가 (JWT의 sub로 사용됨)
+        mapped.put("userId", dbUserId);
+        
+        // 로깅: DB userId와 JWT sub가 일치하는지 확인
+        System.out.println("🔍 OAuth2 로그인 - DB userId: " + dbUserId);
+        System.out.println("🔍 OAuth2 로그인 - mapped.get('userId'): " + mapped.get("userId"));
 
-        return new DefaultOAuth2User(
+        DefaultOAuth2User oauth2User = new DefaultOAuth2User(
                 Set.of(new SimpleGrantedAuthority("ROLE_USER")),
                 mapped,
-                "email"
+                "userId"  // JWT의 sub가 userId가 되도록 변경
         );
+        
+        // 로깅: DefaultOAuth2User.getName()이 DB userId와 일치하는지 확인
+        System.out.println("🔍 OAuth2 로그인 - oauth2User.getName(): " + oauth2User.getName());
+        
+        return oauth2User;
     }
 
     private Map<String, Object> mapAttributes(String registrationId, Map<String, Object> attrs) {
@@ -72,4 +84,3 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return v == null ? null : String.valueOf(v);
     }
 }
-
