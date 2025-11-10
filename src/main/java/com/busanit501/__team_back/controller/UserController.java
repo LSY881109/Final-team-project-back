@@ -5,7 +5,9 @@ import com.busanit501.__team_back.dto.user.UserSignUpRequest;
 import com.busanit501.__team_back.security.jwt.TokenInfo;
 import com.busanit501.__team_back.service.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
@@ -13,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users") // Maria DB의 users 테이블에 접근
@@ -22,6 +27,7 @@ public class UserController {
 
     private final UserService userService;
     private final ObjectMapper objectMapper; // JSON 변환을 위한 ObjectMapper 주입
+    private final Validator validator;
 
     // consumes : 들어오는 데이터 타입을 명시. multipart/form-data 타입만 허용.
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -50,6 +56,14 @@ public class UserController {
 //            log.warn("유효성 검사 오류: " + errorMsg);
 //            return ResponseEntity.badRequest().body(errorMsg);
 //        }
+        Set<ConstraintViolation<UserSignUpRequest>> violations = validator.validate(signUpRequest);
+        if (!violations.isEmpty()) {
+            String errorMsg = violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+            log.warn("유효성 검사 오류: " + errorMsg);
+            return ResponseEntity.badRequest().body(errorMsg);
+        }
 
         // 비밀번호와 비밀번호 확인 일치 여부 검사
         if (!signUpRequest.getPassword().equals(signUpRequest.getPasswordConfirm())) {
