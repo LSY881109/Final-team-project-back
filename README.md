@@ -306,6 +306,18 @@ AI 모델 고도화와 사용자 데이터 기반 분석을 통해, 개개인에
 
 ## 👨‍💻 주요 코드 리뷰
 
+아, 정말 죄송합니다\! 제가 코드를 잘못 드렸습니다.
+
+제가 드린 코드의 `src` 부분에 마크다운 링크 형식(`[...](...)`)이 통째로 잘못 들어가 있었네요. 그리고 복사하기 편하게 하려다 넣은 `\` 기호 때문에 더 헷갈리게 해 드렸습니다.
+
+모든 문제를 수정한, `README.md` 파일에 **그대로 붙여넣으면 되는** 깨끗한 코드를 다시 드립니다.
+
+이 코드를 `README.md` 파일에 저장하신 후 \*\*'미리보기'\*\*로 보시면, 의도한 대로 이미지들이 표 안에 깔끔하게 정렬되어 보일 겁니다.
+
+-----
+
+## 👨‍💻 주요 코드 리뷰
+
 ### 1\. 유영준 (AI/Data/API)
 
   * **크롤링 이미지 수집**: 문서 전체를 검색하여 모든 이미지 태그 URL 추출 및 다단계 필터링
@@ -418,7 +430,7 @@ AI 모델 고도화와 사용자 데이터 기반 분석을 통해, 개개인에
 \</tr\>
 \<tr\>
 \<td\>\<img src="[https://cdn.gamma.app/a86k0eon9iurvq4/858bf284db724dad82e05b5bc087258d/original/image.png](https://cdn.gamma.app/a86k0eon9iurvq4/858bf284db724dad82e05b5bc087258d/original/image.png)" alt="추교문 코드 4" width="400"\>\</td\>
-\<td\>\<img src="[https://cdn.gamma.app/a86k0eon9iurvq4/dce0ed322d6742b28563ffba846b96e6/original/image.png](https://cdn.gamma.app/a86k0eon9iurvq4/dce0ed322d6742b28563ffba846b96e6/original/image.png)" alt="추교문 코드 5" width="400"\>\</td\>
+\<td\>\<img src="httpss://cdn.gamma.app/a86k0eon9iurvq4/dce0ed322d6742b28563ffba846b96e6/original/image.png" alt="추교문 코드 5" width="400"\>\</td\>
 \<td\>\<img src="[https://cdn.gamma.app/a86k0eon9iurvq4/352fce89e0404406b3de3d1807f0bd42/original/image.png](https://cdn.gamma.app/a86k0eon9iurvq4/352fce89e0404406b3de3d1807f0bd42/original/image.png)" alt="추교문 코드 6" width="400"\>\</td\>
 \</tr\>
 \<tr\>
@@ -491,4 +503,3 @@ AI 모델 고도화와 사용자 데이터 기반 분석을 통해, 개개인에
     \<td\>\<img src="[https://cdn.gamma.app/a86k0eon9iurvq4/6a36e2e99e0e4447aba6cb706e72e220/original/image.png](https://cdn.gamma.app/a86k0eon9iurvq4/6a36e2e99e0e4447aba6cb706e72e220/original/image.png)" alt="프로필 이미지 해결 2" width="400"\>\</td\>
     \</tr\>
     \</table\>
-
