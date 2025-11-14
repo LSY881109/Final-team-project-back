@@ -296,7 +296,8 @@ AI 모델 고도화와 사용자 데이터 기반 분석을 통해, 개개인에
 
 ### 주요 코드 리뷰
 1. 유영준 (AI/Data/API)
-크롤링 이미지 수집: 문서 전체를 검색하여 모든 이미지 태그 URL 추출 및 다단계 필터링     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/f3aace39f4ac4f36a0390015109c3972/original/image.png" alt="코드 이미지" width="100">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/829266b81d2c4c208b902500768cff1d/original/image.png" alt="코드 이미지" width="100">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/cb57966896464a33bbd3aa836cdb357c/original/image.png" alt="코드 이미지" width="100">
+크롤링 이미지 수집: 문서 전체를 검색하여 모든 이미지 태그 URL 추출 및 다단계 필터링
+ <img src="https://cdn.gamma.app/a86k0eon9iurvq4/f3aace39f4ac4f36a0390015109c3972/original/image.png" alt="코드 이미지" width="200">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/829266b81d2c4c208b902500768cff1d/original/image.png" alt="코드 이미지" width="100">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/cb57966896464a33bbd3aa836cdb357c/original/image.png" alt="코드 이미지" width="100">
 
 전처리 (배경 제거): BiRefNet 딥러닝 모델을 사용한 배경 제거 (누끼 따기)     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/c54dfe5886e145e19b87811652a8bd59/original/image.png" alt="코드 이미지" width="100">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/ba263258bc034a7aabc9da15753e242e/original/image.png" alt="코드 이미지" width="100">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/3d2dd48de7a244a8b2d8f2287cfd6589/original/image.png" alt="코드 이미지" width="100">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/564edb314ddf4aa39c1c50870fed56dc/original/image.png" alt="코드 이미지" width="100">
 
