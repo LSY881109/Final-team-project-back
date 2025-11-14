@@ -298,7 +298,14 @@ AI 모델 고도화와 사용자 데이터 기반 분석을 통해, 개개인에
 
 ### 1. 유영준 (AI/Data/API)
 * **크롤링 이미지 수집**: 문서 전체를 검색하여 모든 이미지 태그 URL 추출 및 다단계 필터링
+* https://cdn.gamma.app/a86k0eon9iurvq4/f3aace39f4ac4f36a0390015109c3972/original/image.png
+* https://cdn.gamma.app/a86k0eon9iurvq4/829266b81d2c4c208b902500768cff1d/original/image.png
+* https://cdn.gamma.app/a86k0eon9iurvq4/cb57966896464a33bbd3aa836cdb357c/original/image.png
 * **전처리 (배경 제거)**: BiRefNet 딥러닝 모델을 사용한 배경 제거 (누끼 따기)
+* https://cdn.gamma.app/a86k0eon9iurvq4/c54dfe5886e145e19b87811652a8bd59/original/image.png
+* https://cdn.gamma.app/a86k0eon9iurvq4/ba263258bc034a7aabc9da15753e242e/original/image.png
+* https://cdn.gamma.app/a86k0eon9iurvq4/3d2dd48de7a244a8b2d8f2287cfd6589/original/image.png
+* https://cdn.gamma.app/a86k0eon9iurvq4/564edb314ddf4aa39c1c50870fed56dc/original/image.png
 * **이미지 딥러닝 (훈련)**: 클래스별 데이터 불균형 해소를 위한 가중치 적용 샘플링
 * **이미지 딥러닝 (추론)**: 학습된 모델을 통해 음식 예측
 * **Flask**: Flask와 PyTorch를 사용해 이미지 분석 결과를 JSON으로 반환하는 API 서버 구축
@@ -314,15 +321,25 @@ AI 모델 고도화와 사용자 데이터 기반 분석을 통해, 개개인에
 
 ### 3. 추교문 (DB/Backend)
 * 코드 리뷰 (추교문) 1
+https://cdn.gamma.app/a86k0eon9iurvq4/79bf672aae3845ac8380246ea81c44b7/original/image.png
 * 코드 리뷰 (추교문) 2
-* 코드 리뷰 (추교문) 3
+* https://cdn.gamma.app/a86k0eon9iurvq4/7707d761333f45ad861aeb5ad05cfa7a/original/image.png
+* 코드 리뷰 (추교문) 3 
+https://cdn.gamma.app/a86k0eon9iurvq4/4f93a5da03184601aa635e1837fc10b0/original/image.png
 * 코드 리뷰 (추교문) 4
+* https://cdn.gamma.app/a86k0eon9iurvq4/858bf284db724dad82e05b5bc087258d/original/image.png
 * 코드 리뷰 (추교문) 5
+* https://cdn.gamma.app/a86k0eon9iurvq4/dce0ed322d6742b28563ffba846b96e6/original/image.png
 * 코드 리뷰 (추교문) 6
+* https://cdn.gamma.app/a86k0eon9iurvq4/352fce89e0404406b3de3d1807f0bd42/original/image.png
 * 코드 리뷰 (추교문) 7
+* https://cdn.gamma.app/a86k0eon9iurvq4/14ecb346b9f2475d8f79f4b114d4da47/original/image.png
 * 코드 리뷰 (추교문) 8
+* https://cdn.gamma.app/a86k0eon9iurvq4/92d9f7c9130345b19be1c8bc366b1140/original/image.png
 * 코드 리뷰 (추교문) 9
+* https://cdn.gamma.app/a86k0eon9iurvq4/b6acf3dd86584abab369112922ec8258/original/image.png
 * 코드 리뷰 (추교문) 10
+* https://cdn.gamma.app/a86k0eon9iurvq4/55c51a60daf14a27b5e84a1e50cf5e48/original/image.png
 
 ### 4. 류성원 (Security/Auth)
 * **SecurityConfig.java**: 진입, 연결, 필터 배치
