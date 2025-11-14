@@ -1,64 +1,4 @@
-# Final-team-project-back
 
-## 🚀 최종 프로젝트 핵심 기획서 (하이브리드 DB 및 백엔드 아키텍처)
-
----
-
-## 1. 프로젝트 개요 및 목표
-
-* **팀 프로젝트명**: (현재 미정)
-* **프로젝트 개요 및 목표**:
-    음식 이미지를 모바일 앱(Flutter)으로 캡처하여 백엔드(Spring Boot, Flask)로 전송하고, AI(Flask) 분석을 통해 음식 이름과 정확도를 도출합니다. 이 분석 결과를 기반으로 영양소/칼로리 정보(MongoDB)와 유튜브 레시피 링크를 통합하여 사용자에게 제공하고, 모든 활동 기록은 효율적인 하이브리드 DB 구조를 통해 관리됩니다.
-* **핵심 목표**: 음식 이미지 분석 및 통합 레시피/영양소 정보 제공 시스템 구축
-
----
-
-## 2. 프로젝트 핵심 프레임워크 및 선정 이유
-
-| 분류 | 프레임워크/DB | 선정 이유 | 역할 |
-| --- | --- | --- | --- |
-| **프론트엔드** | Flutter | **크로스 플랫폼 개발**: 단일 코드베이스로 Android/iOS 동시 지원. 뛰어난 UI 성능. | 사용자 UI 구현, 백엔드 API 호출, 이미지 캡처 및 전송. |
-| **API 서버** | Spring Boot (Java) | **견고한 아키텍처**: 복잡한 하이브리드 DB 조인 로직 및 인증/보안 처리에 강함. | 인증, DB 조인 로직 구현, Flask 통신 제어, API 엔드포인트 제공. |
-| **AI 마이크로 서비스** | Flask (Python) | **AI/딥러닝 특화**: Python 기반 라이브러리(TensorFlow 등)와의 연동 용이성. | 이미지 분석 모델 실행, 분석 결과 도출. |
-| **RDBMS** | MariaDB | **데이터 무결성 및 정규화**: 사용자 계정, 비밀번호 해시, 활동 기록의 메타데이터 (SearchSessions) 무결성 보장. | Spring Boot의 JPA를 통해 접근. |
-| **NoSQL** | MongoDB | **대용량 파일 저장 및 유연성**: 이미지 원본(GridFS), AI 분석 결과, 영양소 정보 등 유연한 데이터 처리. | Spring Data MongoDB를 통해 접근. |
-
----
-
-## 3. 최종 데이터베이스 구조 및 관계 분석 (MariaDB + MongoDB)
-
-### 3.1. MariaDB (RDBMS): 무결성, 인증, 조인의 중심
-
-| 테이블 | 필드명 (데이터 타입) | 역할 및 관계 | 제약 조건 |
-| --- | --- | --- | --- |
-| **Users** | `user_id` (BIGINT/UUID) | Primary Key. 시스템 전체의 고유 식별자. | PK, Not Null |
-| | `email` (VARCHAR(255)) | 로그인 ID. | Unique, Not Null |
-| | `password_hash` (VARCHAR(255)) | 암호화된 비밀번호. | Not Null |
-| | `profile_image_id` (ObjectID Ref.) | MongoDB `ProfileImages` 컬렉션을 참조하는 키. | Index, Nullable (FK to MongoDB) |
-| **SearchSessions** | `session_id` (BIGINT) | Primary Key. 검색 기록의 고유 ID. | PK, Auto Inc. |
-| | `user_id` (BIGINT/UUID) | `Users` 테이블을 참조하는 외래 키. | FK, Not Null |
-| | `analysis_result_id` (ObjectID Ref.) | MongoDB `AnalysisResults` 문서를 참조하는 키. | Index, Not Null (FK to MongoDB) |
-| | `search_timestamp` (DATETIME) | 기록의 시간 정보. (최근 검색 정렬 기준) | Not Null |
-
-### 3.2. MongoDB (NoSQL): 대용량 저장 및 유연한 데이터
-
-| 컬렉션 | 필드명 (데이터 타입) | 역할 및 관계 | 비고 |
-| --- | --- | --- | --- |
-| **ProfileImages** | `_id` (ObjectID) | MariaDB `Users.profile_image_id`와 맵핑됨. | PK in Mongo |
-| | `image_data` (Binary/GridFS) | 프로필 이미지 원본 파일 데이터. | 16MB 초과 시 GridFS 권장 |
-| **AnalysisResults** | `_id` (ObjectID) | MariaDB `SearchSessions.analysis_result_id`와 맵핑됨. | PK in Mongo |
-| | `raw_image_data` (Binary/GridFS) | 사용자 요청 이미지 원본 (딥러닝 활용). | 대용량 파일 저장 |
-| | `ai_analysis_result` (Object) | AI 모델의 분석 결과 (food + accuracy). | 유연한 구조 |
-| | `youtube_recipes` (Array of Objects) | 구글 API를 통해 검색된 레시피 링크 배열. | 유연한 데이터 구조 |
-| | `food_reference_id` (ObjectID Ref.) | `FoodReference` 컬렉션을 참조하는 키. | FK to MongoDB |
-| **FoodReference** | `_id` (ObjectID) | `AnalysisResults.food_reference_id`가 참조함. | PK in Mongo |
-| | `nutrition_data` (Object) | 직접 입력되는 영양소 및 칼로리 정보. | 정적 데이터 |
-
----
-
-## 4. 백엔드 아키텍처 및 구현 계획
-
-### 4.1. 백엔드 폴더/패키지 상세 구조 (Spring Boot 기반)
 
 # 🍲 음밥해 (Eumbabae)
 
@@ -147,7 +87,10 @@
     * **Key Link**: MariaDB `User` 엔티티가 MongoDB `ProfileImage`의 Document ID를 `profileImageId(String)` 필드로 참조하여 두 DB를 연결합니다.
 
 ### 3. ERD 다이어그램
-*(ERD 상세 내용)*
+## 💾 ERD (데이터베이스 관계도)
+
+
+<img width="1265" height="926" alt="음밥해erd다이어그램" src="https://github.com/user-attachments/assets/6eac0c81-6db0-4d33-ad41-5b9e88c574a7" />
 
 ---
 
@@ -228,6 +171,8 @@
 * **YouTube 레시피 추천 목록**: 분석된 음식과 관련된 YouTube 레시피 영상들이 카드 형태로 추천됩니다.
 
 ---
+## 프로젝트 기능구현 화면
+[![프로젝트 기능구현 화면](https://img.youtube.com/vi/58Sp2FFxv1s/hqdefault.jpg)](https://youtu.be/58Sp2FFxv1s)
 
 ## 🗓️ 3주 압축 프로젝트 일정 (10/17 ~ 11/14)
 
