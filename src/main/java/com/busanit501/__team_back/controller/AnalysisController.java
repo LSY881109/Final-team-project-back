@@ -2,7 +2,9 @@ package com.busanit501.__team_back.controller;
 
 import com.busanit501.__team_back.dto.analysis.AnalysisHistoryDTO;
 import com.busanit501.__team_back.dto.analysis.FoodAnalysisResultDTO;
+import com.busanit501.__team_back.entity.MariaDB.User;
 import com.busanit501.__team_back.entity.MongoDB.AnalysisHistory;
+import com.busanit501.__team_back.repository.maria.UserRepository;
 import com.busanit501.__team_back.repository.mongo.AnalysisHistoryRepository;
 import com.busanit501.__team_back.service.user.AnalysisService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,9 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,16 +30,78 @@ public class AnalysisController {
 
     private final AnalysisService analysisService;
     private final AnalysisHistoryRepository analysisHistoryRepository;
+    private final UserRepository userRepository;
+    
+    /**
+     * SecurityContext에서 현재 로그인한 사용자의 userId (String)를 추출하고,
+     * 이를 User.id (Long)로 변환합니다.
+     * @return User.id (Long), 인증되지 않은 경우 null
+     */
+    private Long getCurrentUserId() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                log.warn("인증되지 않은 사용자입니다.");
+                return null;
+            }
+            
+            // Authentication의 principal에서 userId (String) 추출
+            Object principal = authentication.getPrincipal();
+            String userIdString = null;
+            
+            if (principal instanceof UserDetails) {
+                userIdString = ((UserDetails) principal).getUsername();
+            } else if (principal instanceof String) {
+                userIdString = (String) principal;
+            }
+            
+            if (userIdString == null || userIdString.isEmpty()) {
+                log.warn("userId를 추출할 수 없습니다.");
+                return null;
+            }
+            
+            // userId (String)로 User를 찾아서 User.id (Long) 반환
+            Optional<User> userOpt = userRepository.findByUserId(userIdString);
+            if (userOpt.isEmpty()) {
+                log.warn("사용자를 찾을 수 없습니다. userId: {}", userIdString);
+                return null;
+            }
+            
+            Long userId = userOpt.get().getId();
+            log.info("현재 로그인한 사용자 ID: {} (userId: {})", userId, userIdString);
+            return userId;
+        } catch (Exception e) {
+            log.error("사용자 ID 추출 중 오류 발생", e);
+            return null;
+        }
+    }
 
     // 이미지 분석 요청 처리
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FoodAnalysisResultDTO> analyzeImage(
-            // TODO: Security 적용 후 @AuthenticationPrincipal 로 실제 로그인 사용자 ID를 가져와야 합니다.
-            // 우선 테스트를 위해 userId를 요청 파라미터로 받습니다.
-            @RequestParam("userId") Long userId,
+            // JWT 토큰에서 현재 로그인한 사용자 ID를 자동으로 추출합니다.
+            @RequestParam(value = "userId", required = false) Long userIdParam, // 하위 호환성을 위해 유지 (선택적)
             @RequestParam("image") MultipartFile imageFile,
             @RequestParam(value = "youtubeKeyword", required = false) String youtubeKeyword,
             @RequestParam(value = "youtubeOrder", required = false, defaultValue = "relevance") String youtubeOrder) {
+
+        // JWT 토큰에서 현재 로그인한 사용자 ID 추출
+        Long userId = getCurrentUserId();
+        
+        // JWT 토큰에서 userId를 가져올 수 없는 경우, 파라미터로 전달된 userId 사용 (하위 호환성)
+        if (userId == null && userIdParam != null) {
+            userId = userIdParam;
+            log.warn("JWT 토큰에서 사용자 ID를 추출할 수 없어 파라미터로 전달된 userId를 사용합니다: {}", userId);
+        }
+        
+        if (userId == null) {
+            log.warn("사용자 ID를 확인할 수 없습니다. 인증이 필요합니다.");
+            return ResponseEntity.status(401).body(
+                FoodAnalysisResultDTO.builder()
+                    .message("인증이 필요합니다. 로그인 후 다시 시도해주세요.")
+                    .build()
+            );
+        }
 
         log.info("이미지 분석 요청 수신 - 사용자 ID: {}, 파일명: {}, YouTube 키워드: {}, 정렬: {}", 
                 userId, imageFile.getOriginalFilename(), youtubeKeyword, youtubeOrder);
@@ -101,16 +168,22 @@ public class AnalysisController {
 
     /**
      * 사용자의 분석 히스토리 조회
-     * @param userId 사용자 ID (임시로 파라미터로 받음, 추후 JWT에서 추출)
+     * JWT 토큰에서 현재 로그인한 사용자 ID를 자동으로 추출합니다.
      * @param page 페이지 번호 (기본값: 0)
      * @param size 페이지 크기 (기본값: 10)
      * @return 분석 히스토리 목록
      */
     @GetMapping("/history")
     public ResponseEntity<List<AnalysisHistoryDTO>> getAnalysisHistory(
-            @RequestParam("userId") Long userId,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
+        
+        // JWT 토큰에서 현재 로그인한 사용자 ID 추출
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            log.warn("인증되지 않은 사용자의 히스토리 조회 요청");
+            return ResponseEntity.status(401).build();
+        }
         
         log.info("분석 히스토리 조회 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
         
@@ -140,7 +213,7 @@ public class AnalysisController {
 
     /**
      * YouTube 레시피 클릭 시 저장
-     * @param userId 사용자 ID
+     * JWT 토큰에서 현재 로그인한 사용자 ID를 자동으로 추출합니다.
      * @param historyId 분석 이력 ID
      * @param title YouTube 영상 제목
      * @param url YouTube 영상 URL
@@ -148,10 +221,16 @@ public class AnalysisController {
      */
     @PostMapping("/youtube-recipe/click")
     public ResponseEntity<Void> saveClickedYouTubeRecipe(
-            @RequestParam("userId") Long userId,
             @RequestParam("historyId") String historyId,
             @RequestParam("title") String title,
             @RequestParam("url") String url) {
+        
+        // JWT 토큰에서 현재 로그인한 사용자 ID 추출
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            log.warn("인증되지 않은 사용자의 YouTube 레시피 저장 요청");
+            return ResponseEntity.status(401).build();
+        }
         
         log.info("YouTube 레시피 클릭 저장 요청 - 사용자 ID: {}, 히스토리 ID: {}, 제목: {}", userId, historyId, title);
         

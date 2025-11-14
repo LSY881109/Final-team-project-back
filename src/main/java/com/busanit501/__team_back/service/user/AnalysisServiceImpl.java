@@ -392,29 +392,33 @@ public class AnalysisServiceImpl implements AnalysisService {
      */
     @Override
     public void saveClickedYouTubeRecipe(Long userId, String historyId, String title, String url) {
-        log.info("YouTube 레시피 클릭 저장 요청 - 사용자 ID: {}, 히스토리 ID: {}, 제목: {}", userId, historyId, title);
+        log.info("🔍 YouTube 레시피 클릭 저장 요청 - 사용자 ID: {}, 히스토리 ID: {}, 제목: {}", userId, historyId, title);
         
         try {
             // MongoDB에서 해당 히스토리 조회
             Optional<AnalysisHistory> historyOptional = analysisHistoryRepository.findById(historyId);
             
             if (historyOptional.isEmpty()) {
-                log.warn("분석 이력을 찾을 수 없음 - History ID: {}", historyId);
-                return;
+                log.error("❌ 분석 이력을 찾을 수 없음 - History ID: {}", historyId);
+                throw new IllegalArgumentException("분석 이력을 찾을 수 없습니다: " + historyId);
             }
             
             AnalysisHistory history = historyOptional.get();
+            log.info("🔍 히스토리 조회 성공 - userId: {}, historyId: {}", history.getUserId(), historyId);
             
             // 사용자 ID 검증
             if (!history.getUserId().equals(userId)) {
-                log.warn("사용자 ID 불일치 - 요청한 사용자: {}, 히스토리 소유자: {}", userId, history.getUserId());
-                return;
+                log.error("❌ 사용자 ID 불일치 - 요청한 사용자: {}, 히스토리 소유자: {}", userId, history.getUserId());
+                throw new IllegalArgumentException("사용자 ID가 일치하지 않습니다.");
             }
             
             // YouTube 레시피 목록 가져오기 (null이면 빈 리스트로 초기화)
             List<AnalysisHistory.YoutubeRecipe> youtubeRecipes = history.getYoutubeRecipes();
             if (youtubeRecipes == null) {
                 youtubeRecipes = new ArrayList<>();
+                log.info("🔍 YouTube 레시피 목록이 null이므로 빈 리스트로 초기화");
+            } else {
+                log.info("🔍 기존 YouTube 레시피 개수: {}", youtubeRecipes.size());
             }
             
             // 중복 체크 (같은 URL이 이미 있는지 확인)
@@ -422,8 +426,8 @@ public class AnalysisServiceImpl implements AnalysisService {
                     .anyMatch(recipe -> recipe.getUrl() != null && recipe.getUrl().equals(url));
             
             if (alreadyExists) {
-                log.info("이미 저장된 YouTube 레시피입니다. URL: {}", url);
-                return;
+                log.info("⚠️ 이미 저장된 YouTube 레시피입니다. URL: {}", url);
+                return; // 중복은 예외가 아니므로 정상 반환
             }
             
             // 새로운 YouTube 레시피 추가
@@ -438,9 +442,15 @@ public class AnalysisServiceImpl implements AnalysisService {
             // MongoDB에 저장
             analysisHistoryRepository.save(history);
             
-            log.info("YouTube 레시피 저장 완료 - 히스토리 ID: {}, 제목: {}", historyId, title);
+            log.info("✅ YouTube 레시피 저장 완료 - 히스토리 ID: {}, 제목: {}, 총 레시피 개수: {}", 
+                    historyId, title, youtubeRecipes.size());
+        } catch (IllegalArgumentException e) {
+            // 검증 실패는 예외를 다시 던져서 컨트롤러에서 처리
+            log.error("❌ YouTube 레시피 저장 검증 실패 - 히스토리 ID: {}", historyId, e);
+            throw e;
         } catch (Exception e) {
-            log.error("YouTube 레시피 저장 중 오류 발생 - 히스토리 ID: {}", historyId, e);
+            log.error("❌ YouTube 레시피 저장 중 오류 발생 - 히스토리 ID: {}", historyId, e);
+            throw new RuntimeException("YouTube 레시피 저장 중 오류가 발생했습니다.", e);
         }
     }
 }

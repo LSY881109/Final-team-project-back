@@ -14,52 +14,75 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AIAnalysisServiceImpl implements AIAnalysisService {
 
-    private final OkHttpClient okHttpClient; // OkHttpConfig에서 등록한 Bean 주입
+    private final OkHttpClient okHttpClient; // Bean injected from OkHttpConfig
     private final ObjectMapper objectMapper;
 
-    @Value("${flask.api.url}") // application.properties에서 Flask 서버 주소 가져오기
+    @Value("${flask.api.url}") // Flask server URL from application.properties
     private String flaskApiUrl;
 
     @Override
     public AiResponse analyzeImage(MultipartFile imageFile) throws IOException {
-        // 1. 요청 바디(Body) 생성: Multipart 형식
+        // 1. Create request body: Multipart format
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart(
-                        "image", // Flask에서 받을 파일의 key 이름
+                        "image", // Key name for the file received by Flask
                         imageFile.getOriginalFilename(),
                         RequestBody.create(imageFile.getBytes(), MediaType.parse(imageFile.getContentType()))
                 )
                 .build();
 
-//        application.properties에서 전체 URL을 관리하므로, 서비스 코드에서는 URL을 조합할 필요XX
-        // 2. HTTP 요청(Request) 생성
-        Request request = new Request.Builder()
-//                .url(flaskApiUrl + "/analyze") // Flask API 엔드포인트
-                .url(flaskApiUrl) // flaskApiUrl에 이미 전체 엔드포인트 주소가 들어있음 - 변경
-                .post(requestBody)
-                .build();
+        // 2. Create HTTP request
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(flaskApiUrl) // flaskApiUrl already contains the full endpoint address
+                .post(requestBody);
+        
+        // Add Ngrok header to skip browser warning page
+        if (flaskApiUrl.contains("ngrok")) {
+            requestBuilder.header("ngrok-skip-browser-warning", "true");
+        }
+        
+        Request request = requestBuilder.build();
+        
+        System.out.println("🔗 Flask API URL: " + flaskApiUrl);
 
-        // 3. 요청 실행 및 응답 수신
+        // 3. Execute request and receive response
         try (Response response = okHttpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                String errorBody = response.body() != null ? response.body().string() : "응답 본문 없음";
+                String errorBody = response.body() != null ? response.body().string() : "No response body";
+                System.err.println("❌ Flask server error response (HTTP " + response.code() + "): " + errorBody.substring(0, Math.min(500, errorBody.length())));
                 throw new IOException(String.format(
-                    "Flask 서버 응답 실패 - HTTP %d: %s", 
+                    "Flask server response failed - HTTP %d: %s", 
                     response.code(), 
-                    errorBody
+                    errorBody.length() > 500 ? errorBody.substring(0, 500) + "..." : errorBody
                 ));
             }
-            // 4. 응답받은 JSON 문자열을 DTO 객체로 변환하여 반환
+            // 4. Convert received JSON string to DTO object and return
             String responseBody = response.body().string();
             if (responseBody == null || responseBody.trim().isEmpty()) {
-                throw new IOException("Flask 서버로부터 빈 응답을 받았습니다.");
+                throw new IOException("Received empty response from Flask server.");
             }
-            return objectMapper.readValue(responseBody, AiResponse.class);
+            
+            // Debug: Log response body (first 500 chars)
+            System.out.println("📦 Flask response body (first 500 chars): " + responseBody.substring(0, Math.min(500, responseBody.length())));
+            
+            // Check if response is HTML (Ngrok warning page or error page)
+            String trimmedBody = responseBody.trim();
+            if (trimmedBody.startsWith("<") || trimmedBody.startsWith("<!DOCTYPE")) {
+                System.err.println("❌ Flask server returned HTML instead of JSON. Response: " + trimmedBody.substring(0, Math.min(1000, trimmedBody.length())));
+                throw new IOException("Flask server returned HTML instead of JSON. This may be due to Ngrok warning page or server error. Please check Flask server status and Ngrok configuration.");
+            }
+            
+            try {
+                return objectMapper.readValue(responseBody, AiResponse.class);
+            } catch (com.fasterxml.jackson.core.JsonParseException e) {
+                System.err.println("❌ JSON parsing error. Response body: " + responseBody.substring(0, Math.min(1000, responseBody.length())));
+                throw new IOException("Failed to parse JSON response from Flask server. Response may be HTML or invalid JSON: " + e.getMessage(), e);
+            }
         } catch (java.net.ConnectException e) {
-            throw new IOException("Flask 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요: " + flaskApiUrl, e);
+            throw new IOException("Cannot connect to Flask server. Please check if the server is running: " + flaskApiUrl, e);
         } catch (java.net.SocketTimeoutException e) {
-            throw new IOException("Flask 서버 응답 시간 초과. 서버 상태를 확인하세요.", e);
+            throw new IOException("Flask server response timeout. Please check the server status.", e);
         }
     }
 }

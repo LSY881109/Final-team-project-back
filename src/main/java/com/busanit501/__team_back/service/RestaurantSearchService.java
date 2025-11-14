@@ -7,7 +7,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,10 +33,13 @@ public class RestaurantSearchService {
 
         // 검색 반경 (미터)
         int radius = 5000; // 5km (조정 가능)
-        // 검색 쿼리 (예: "돈가스", "돈가스 맛집", "돈가스 식당")
-        String query = foodName;
+        // 검색 쿼리 개선: "음식이름 맛집" 또는 "음식이름 식당" 형태로 검색
+        // Google Places API는 더 구체적인 쿼리에서 더 좋은 결과를 반환
+        String query = foodName + " 맛집";
 
         try {
+            log.info("🔍 Google Places API 검색 시작: query={}, location={},{}", query, latitude, longitude);
+            
             // Places API 호출
             // WebClient를 사용한 비동기 호출 후 동기(block)로 변환
             JsonNode response = googlePlacesWebClient.get()
@@ -54,25 +56,48 @@ public class RestaurantSearchService {
                     .bodyToMono(JsonNode.class)
                     .block(); // 동기 방식
 
-            if (response == null || !response.path("status").asText().equals("OK")) {
-                log.error("Places API Error: {}", response != null ? response.path("status").asText() : "Response is null");
+            if (response == null) {
+                log.error("❌ Places API 응답이 null입니다");
+                return Collections.emptyList();
+            }
+            
+            String status = response.path("status").asText();
+            log.info("📥 Places API 응답 상태: {}", status);
+            
+            if (!status.equals("OK")) {
+                log.error("❌ Places API Error: {}", status);
+                if (response.has("error_message")) {
+                    log.error("❌ 에러 메시지: {}", response.path("error_message").asText());
+                }
                 return Collections.emptyList();
             }
 
             // 결과(JsonNode)를 DTO(List<RestaurantInfo>)로 파싱
             List<RestaurantInfo> restaurants = new ArrayList<>();
-            for (JsonNode result : response.path("results")) {
+            JsonNode results = response.path("results");
+            log.info("📊 검색 결과 수: {}", results.size());
+            
+            for (JsonNode result : results) {
                 JsonNode location = result.path("geometry").path("location");
+                String name = result.path("name").asText();
+                String address = result.path("formatted_address").asText();
+                double lat = location.path("lat").asDouble();
+                double lng = location.path("lng").asDouble();
+                
+                log.info("🏪 식당 발견: {} (위도: {}, 경도: {})", name, lat, lng);
+                
                 RestaurantInfo restaurant = RestaurantInfo.builder()
-                        .name(result.path("name").asText())
-                        .address(result.path("formatted_address").asText())
-                        .latitude(location.path("lat").asDouble())
-                        .longitude(location.path("lng").asDouble())
+                        .name(name)
+                        .address(address)
+                        .latitude(lat)
+                        .longitude(lng)
                         .rating(result.path("rating").asDouble(0.0))
                         .placeId(result.path("place_id").asText())
                         .build();
                 restaurants.add(restaurant);
             }
+            
+            log.info("✅ 총 {}개의 식당을 찾았습니다", restaurants.size());
             return restaurants;
 
         } catch (Exception e) {

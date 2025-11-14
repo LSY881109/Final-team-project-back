@@ -4,7 +4,7 @@
 
 Google과 Naver OAuth2 정책으로 인해 IP 주소는 리다이렉트 URI로 허용되지 않습니다. 실제 기기에서 테스트하려면 공개 도메인이 필요하며, ngrok을 사용하여 이를 해결할 수 있습니다.
 
-**고정 도메인**: `YOUR_NGROK_DOMAIN.ngrok-free.app` (예: `sterling-jay-well.ngrok-free.app`)
+**고정 도메인**: `sterling-jay-well.ngrok-free.app`
 
 ---
 
@@ -53,18 +53,18 @@ ngrok config add-authtoken YOUR_AUTH_TOKEN
 
 1. [ngrok Dashboard](https://dashboard.ngrok.com/) > **Cloud Edge** > **Domains**
 2. 고정 도메인 생성 또는 기존 도메인 확인
-3. 현재 사용 중인 도메인 확인 (예: `YOUR_DOMAIN.ngrok-free.app`)
+3. 현재 사용 중인 도메인: `sterling-jay-well.ngrok-free.app`
 
 ### 1.4 ngrok 실행
 
 ```bash
 # 고정 도메인으로 백엔드 서버 터널링
-ngrok http 8080 --domain=YOUR_NGROK_DOMAIN.ngrok-free.app
+ngrok http 8080 --domain=sterling-jay-well.ngrok-free.app
 ```
 
 **출력 예시**:
 ```
-Forwarding: https://YOUR_NGROK_DOMAIN.ngrok-free.app -> http://localhost:8080
+Forwarding: https://sterling-jay-well.ngrok-free.app -> http://localhost:8080
 ```
 
 ⚠️ **중요**: 백엔드 서버가 실행 중이어야 합니다 (`./gradlew bootRun`)
@@ -85,10 +85,8 @@ Forwarding: https://YOUR_NGROK_DOMAIN.ngrok-free.app -> http://localhost:8080
 **Client ID**를 선택한 후, **Authorized redirect URIs**에 다음을 **정확히** 추가:
 
 ```
-https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/google
+https://sterling-jay-well.ngrok-free.app/login/oauth2/code/google
 ```
-
-⚠️ **실제 사용 시**: `YOUR_NGROK_DOMAIN`을 실제 ngrok 도메인으로 교체하세요 (예: `sterling-jay-well`)
 
 ⚠️ **주의사항**:
 - `https` 사용 (http 아님)
@@ -120,10 +118,8 @@ https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/google
    - **애플리케이션 이름**: `음밥해` (또는 원하는 이름)
    - **사용 API**: **네이버 로그인** 체크
    - **로그인 오픈 API 서비스 환경**: **PC 웹** 체크
-   - **서비스 URL**: `https://YOUR_NGROK_DOMAIN.ngrok-free.app`
-   - **Callback URL**: `https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/naver`
-
-⚠️ **실제 사용 시**: `YOUR_NGROK_DOMAIN`을 실제 ngrok 도메인으로 교체하세요
+   - **서비스 URL**: `https://sterling-jay-well.ngrok-free.app`
+   - **Callback URL**: `https://sterling-jay-well.ngrok-free.app/login/oauth2/code/naver`
 
 ### 3.2 제공 정보 선택
 
@@ -140,10 +136,8 @@ https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/google
 
 ⚠️ **중요**: Callback URL이 정확히 다음과 같이 설정되어 있어야 합니다:
 ```
-https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/naver
+https://sterling-jay-well.ngrok-free.app/login/oauth2/code/naver
 ```
-
-⚠️ **실제 사용 시**: `YOUR_NGROK_DOMAIN`을 실제 ngrok 도메인으로 교체하세요
 
 ---
 
@@ -160,19 +154,19 @@ spring:
       client:
         registration:
           google:
-            client-id: "YOUR_GOOGLE_CLIENT_ID"
-            client-secret: "YOUR_GOOGLE_CLIENT_SECRET"
+            client-id: "${GOOGLE_CLIENT_ID:your-google-client-id}"
+            client-secret: "${GOOGLE_CLIENT_SECRET:your-google-client-secret}"
             scope: profile, email
             # ⚠️ ngrok 사용 시: ngrok URL을 직접 지정
-            redirect-uri: 'https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/google'
+            redirect-uri: 'https://sterling-jay-well.ngrok-free.app/login/oauth2/code/google'
             client-authentication-method: client_secret_post
           naver:
-            client-id: YOUR_NAVER_CLIENT_ID
-            client-secret: YOUR_NAVER_CLIENT_SECRET
+            client-id: RWlkraxniAGcuJga5z1g
+            client-secret: cLTIIpGA2c
             client-name: Naver
             authorization-grant-type: authorization_code
             # ⚠️ ngrok 사용 시: ngrok URL을 직접 지정
-            redirect-uri: 'https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/naver'
+            redirect-uri: 'https://sterling-jay-well.ngrok-free.app/login/oauth2/code/naver'
             scope: name, email, profile_image
         provider:
           naver:
@@ -215,9 +209,9 @@ class LoginController {
   /// ⚠️ Google OAuth2 정책: IP 주소는 리다이렉트 URI로 허용되지 않음
   /// 
   /// 실제 기기 테스트: ngrok 사용
-  /// 고정 도메인: YOUR_NGROK_DOMAIN.ngrok-free.app
-  /// 실행: ngrok http 8080 --domain=YOUR_NGROK_DOMAIN.ngrok-free.app
-  static const String _ngrokUrl = 'https://YOUR_NGROK_DOMAIN.ngrok-free.app';
+  /// 고정 도메인: sterling-jay-well.ngrok-free.app
+  /// 실행: ngrok http 8080 --domain=sterling-jay-well.ngrok-free.app
+  static const String _ngrokUrl = 'https://sterling-jay-well.ngrok-free.app';
   
   static String get _baseUrl {
     // ngrok URL이 설정되어 있으면 모든 플랫폼에서 ngrok 사용 (실제 기기 테스트용)
@@ -293,14 +287,14 @@ flutter run
 ```bash
 # ngrok이 실행 중인지 확인
 # 터미널에서 다음 메시지가 보여야 함:
-# Forwarding: https://YOUR_NGROK_DOMAIN.ngrok-free.app -> http://localhost:8080
+# Forwarding: https://sterling-jay-well.ngrok-free.app -> http://localhost:8080
 ```
 
 ### 6.2 백엔드 서버 접근 테스트
 
 브라우저에서 접속:
 ```
-https://YOUR_NGROK_DOMAIN.ngrok-free.app
+https://sterling-jay-well.ngrok-free.app
 ```
 
 ⚠️ **ngrok 무료 버전 브라우저 경고 페이지**:
@@ -336,9 +330,8 @@ https://YOUR_NGROK_DOMAIN.ngrok-free.app
 1. Google Cloud Console의 **Authorized redirect URIs** 확인
 2. 다음이 정확히 등록되어 있는지 확인:
    ```
-   https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/google
+   https://sterling-jay-well.ngrok-free.app/login/oauth2/code/google
    ```
-   ⚠️ **실제 사용 시**: `YOUR_NGROK_DOMAIN`을 실제 ngrok 도메인으로 교체하세요
 3. `application.yml`의 `redirect-uri`가 동일한지 확인
 4. 백엔드 서버 재시작
 
@@ -352,9 +345,8 @@ https://YOUR_NGROK_DOMAIN.ngrok-free.app
 1. 네이버 개발자 센터의 **Callback URL** 확인
 2. 다음이 정확히 등록되어 있는지 확인:
    ```
-   https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/naver
+   https://sterling-jay-well.ngrok-free.app/login/oauth2/code/naver
    ```
-   ⚠️ **실제 사용 시**: `YOUR_NGROK_DOMAIN`을 실제 ngrok 도메인으로 교체하세요
 3. `application.yml`의 `redirect-uri`가 동일한지 확인
 4. 백엔드 서버 재시작
 
@@ -388,8 +380,8 @@ Authtoken은 [ngrok Dashboard](https://dashboard.ngrok.com/get-started/your-auth
 
 **해결**:
 1. 백엔드 서버가 실행 중인지 확인 (`./gradlew bootRun`)
-2. ngrok이 실행 중인지 확인 (`ngrok http 8080 --domain=YOUR_NGROK_DOMAIN.ngrok-free.app`)
-3. ngrok URL이 올바른지 확인 (`https://YOUR_NGROK_DOMAIN.ngrok-free.app`)
+2. ngrok이 실행 중인지 확인 (`ngrok http 8080 --domain=sterling-jay-well.ngrok-free.app`)
+3. ngrok URL이 올바른지 확인 (`https://sterling-jay-well.ngrok-free.app`)
 
 ---
 
@@ -405,9 +397,9 @@ ngrok은 다음 환경에서 모두 사용 가능합니다:
 ### 8.2 통합 설정
 
 모든 환경에서 동일한 ngrok 설정을 사용합니다:
-- **고정 도메인**: `YOUR_NGROK_DOMAIN.ngrok-free.app` (실제 도메인으로 교체 필요)
-- **Google Cloud Console**: `https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/google` 등록
-- **네이버 개발자 센터**: `https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/naver` 등록
+- **고정 도메인**: `sterling-jay-well.ngrok-free.app`
+- **Google Cloud Console**: `https://sterling-jay-well.ngrok-free.app/login/oauth2/code/google` 등록
+- **네이버 개발자 센터**: `https://sterling-jay-well.ngrok-free.app/login/oauth2/code/naver` 등록
 - **Flutter 앱**: `_ngrokUrl`에 ngrok URL 설정
 - **백엔드**: `application.yml`에 ngrok URL 설정
 
@@ -440,27 +432,27 @@ ngrok은 다음 환경에서 모두 사용 가능합니다:
 
 #### Google OAuth2
 - [ ] ngrok 설치 및 인증 완료
-- [ ] 고정 도메인 확인: `YOUR_NGROK_DOMAIN.ngrok-free.app` (실제 도메인으로 교체)
-- [ ] Google Cloud Console에 리다이렉트 URI 등록: `https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/google`
+- [ ] 고정 도메인 확인: `sterling-jay-well.ngrok-free.app`
+- [ ] Google Cloud Console에 리다이렉트 URI 등록: `https://sterling-jay-well.ngrok-free.app/login/oauth2/code/google`
 - [ ] OAuth 동의 화면에 테스트 사용자 추가
-- [ ] `application.yml`에 Google ngrok URL 및 Client ID/Secret 설정
+- [ ] `application.yml`에 Google ngrok URL 설정
 - [ ] 백엔드 서버 재시작
 - [ ] Flutter 앱의 `_ngrokUrl`에 ngrok URL 설정
 - [ ] Flutter 앱 재빌드
-- [ ] ngrok 실행 중 (`ngrok http 8080 --domain=YOUR_NGROK_DOMAIN.ngrok-free.app`)
+- [ ] ngrok 실행 중 (`ngrok http 8080 --domain=sterling-jay-well.ngrok-free.app`)
 - [ ] Google 로그인 테스트 완료 (시뮬레이터/실제 기기 모두)
 
 #### Naver OAuth2
 - [ ] 네이버 개발자 센터에 애플리케이션 등록
-- [ ] 서비스 URL: `https://YOUR_NGROK_DOMAIN.ngrok-free.app` 등록
-- [ ] Callback URL: `https://YOUR_NGROK_DOMAIN.ngrok-free.app/login/oauth2/code/naver` 등록
+- [ ] 서비스 URL: `https://sterling-jay-well.ngrok-free.app` 등록
+- [ ] Callback URL: `https://sterling-jay-well.ngrok-free.app/login/oauth2/code/naver` 등록
 - [ ] 제공 정보 선택 (이름, 이메일, 프로필 이미지)
-- [ ] Client ID와 Client Secret 확인 및 `application.yml`에 설정
+- [ ] Client ID와 Client Secret 확인
 - [ ] `application.yml`에 Naver ngrok URL 설정
 - [ ] 백엔드 서버 재시작
 - [ ] Flutter 앱의 `_ngrokUrl`에 ngrok URL 설정
 - [ ] Flutter 앱 재빌드
-- [ ] ngrok 실행 중 (`ngrok http 8080 --domain=YOUR_NGROK_DOMAIN.ngrok-free.app`)
+- [ ] ngrok 실행 중 (`ngrok http 8080 --domain=sterling-jay-well.ngrok-free.app`)
 - [ ] Naver 로그인 테스트 완료 (시뮬레이터/실제 기기 모두)
 
 ---
@@ -468,8 +460,9 @@ ngrok은 다음 환경에서 모두 사용 가능합니다:
 ## 11. 참고 자료
 
 - [ngrok 공식 문서](https://ngrok.com/docs)
-- [Google Cloud Console](https://console.cloud.google.com/)
-- [네이버 개발자 센터](https://developers.naver.com/)
+- [Google OAuth2 설정 가이드](./GOOGLE_OAUTH_SETUP.md)
+- [Google OAuth2 IP 주소 문제 해결](./GOOGLE_OAUTH_IP_FIX.md)
+- [Tailscale OAuth2 설정](./TAILSCALE_OAUTH_SETUP.md)
 
 ---
 
