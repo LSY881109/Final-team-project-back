@@ -171,7 +171,8 @@
 * **YouTube 레시피 추천 목록**: 분석된 음식과 관련된 YouTube 레시피 영상들이 카드 형태로 추천됩니다.
 
 ---
-## 프로젝트 기능구현 화면
+## 프로젝트 기능구현 영상
+화면 클릭시 유투브 영상 재생
 [![프로젝트 기능구현 화면](https://img.youtube.com/vi/58Sp2FFxv1s/hqdefault.jpg)](https://youtu.be/58Sp2FFxv1s)
 
 ## 🗓️ 3주 압축 프로젝트 일정 (10/17 ~ 11/14)
