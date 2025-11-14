@@ -296,101 +296,71 @@ AI 모델 고도화와 사용자 데이터 기반 분석을 통해, 개개인에
 
 ## 👨‍💻 주요 코드 리뷰
 
-### 1. 유영준 (AI/Data/API)
-* **크롤링 이미지 수집**: 문서 전체를 검색하여 모든 이미지 태그 URL 추출 및 다단계 필터링
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/f3aace39f4ac4f36a0390015109c3972/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/829266b81d2c4c208b902500768cff1d/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/cb57966896464a33bbd3aa836cdb357c/original/image.png)
-* **전처리 (배경 제거)**: BiRefNet 딥러닝 모델을 사용한 배경 제거 (누끼 따기)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/c54dfe5886e145e19b87811652a8bd59/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/ba263258bc034a7aabc9da15753e242e/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/3d2dd48de7a244a8b2d8f2287cfd6589/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/564edb314ddf4aa39c1c50870fed56dc/original/image.png)
-* **이미지 딥러닝 (훈련)**: 클래스별 데이터 불균형 해소를 위한 가중치 적용 샘플링
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/1261c35862d946b98e9c01e29db44f55/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/58a06a0845274f2c9b8b6a500ce44610/original/image.png)
-* **이미지 딥러닝 (추론)**: 학습된 모델을 통해 음식 예측
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/33422a141abf4901b78696dd300cea19/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/36d2dbbac2c24737804a491dd967594a/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/a0f6ab6f85d344a080667e47c7993920/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/2734b896cf934003adacaf940d52dc8b/original/image.png)
-* **Flask**: Flask와 PyTorch를 사용해 이미지 분석 결과를 JSON으로 반환하는 API 서버 구축
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/e1319db6b94748cbad0ef948c5522d6a/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/66de7f681f7344d9aab0389f13e15ad6/original/image.png)
-* **Flutter**: JSON 데이터를 `AnalysisResult` 객체로 변환
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/b4f0c499421e4df4b963a014926acc3f/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/cf89162d92af4e19825903e91ffc521b/original/image.png)
+1. 유영준 (AI/Data/API)
+크롤링 이미지 수집: 문서 전체를 검색하여 모든 이미지 태그 URL 추출 및 다단계 필터링     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/f3aace39f4ac4f36a0390015109c3972/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/829266b81d2c4c208b902500768cff1d/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/cb57966896464a33bbd3aa836cdb357c/original/image.png" alt="코드 이미지" width="400">
 
-### 2. 김무진 (Maps API/Client)
-* **이미지 크롤링**:
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/8a7f061996474fbfae20653d89235fc9/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/ed4f76b5bc444370a5d57443b0c058aa/original/image.png)
-* **이미지 전처리**:
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/55ce1d6b05444d708c5f5bda9b44cff4/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/b1c8c412048c4ed2a339d5098af12ed5/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/6f829e0756b24a719226915db57c9bdf/original/image.png)
-* **Backend Controller**: `(foodName), (latitude), (longitude)` 매개변수를 추출하여 Service로 전달
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/918fb885c4884ba3b5eb01ad0cf788f7/original/image.png)
-* **Backend Service**: `@Value`로 API 키를 불러와 외부 API 통신 후 Controller에 결과 반환
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/35d4a901c71848e3b5e35b3094ffd830/original/image.png)
-* **분석 결과 식당 지도**: 분석 완료 후 해당 음식 이름으로 주변 식당 자동 검색 및 지도 표시 (내 위치: 파란색, 맛집: 빨간색 마커)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/c8f87db1dfa9451fb067694e1cf7a257/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/1126ebceb7c24111b69aa2cb42fba4e3/original/image.png)
-* **직접 검색 입력 지도**: 사용자가 입력한 키워드 기반으로 백엔드 API 호출
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/a705ddaf1d8242bc96cb6ae250b98d27/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/ebc5dd9b385147f2ae172e6bd64e4386/original/image.png)
-* **Google API 설정**: API 키 제한 설정 (제한 안함 X, 필요 API 직접 설정 O)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/806898d2ce0d456fac3acd7510977ad2/original/image.png)
-* **에뮬레이터 좌표 설정**: 에뮬레이터에서 특정 위치 좌표 설정 방법
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/ab572df560184abfa43ac9712e635e2e/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/21bfa361e4424ed18c5114e3b543712c/original/image.png)
+전처리 (배경 제거): BiRefNet 딥러닝 모델을 사용한 배경 제거 (누끼 따기)     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/c54dfe5886e145e19b87811652a8bd59/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/ba263258bc034a7aabc9da15753e242e/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/3d2dd48de7a244a8b2d8f2287cfd6589/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/564edb314ddf4aa39c1c50870fed56dc/original/image.png" alt="코드 이미지" width="400">
 
-### 3. 추교문 (DB/Backend)
-* 코드 리뷰 (추교문) 1
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/79bf672aae3845ac8380246ea81c44b7/original/image.png)
-* 코드 리뷰 (추교문) 2
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/7707d761333f45ad861aeb5ad05cfa7a/original/image.png)
-* 코드 리뷰 (추교문) 3 
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/4f93a5da03184601aa635e1837fc10b0/original/image.png)
-* 코드 리뷰 (추교문) 4
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/858bf284db724dad82e05b5bc087258d/original/image.png)
-* 코드 리뷰 (추교문) 5
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/dce0ed322d6742b28563ffba846b96e6/original/image.png)
-* 코드 리뷰 (추교문) 6
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/352fce89e0404406b3de3d1807f0bd42/original/image.png)
-* 코드 리뷰 (추교문) 7
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/14ecb346b9f2475d8f79f4b114d4da47/original/image.png)
-* 코드 리뷰 (추교문) 8
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/92d9f7c9130345b19be1c8bc366b1140/original/image.png)
-* 코드 리뷰 (추교문) 9
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/b6acf3dd86584abab369112922ec8258/original/image.png)
-* 코드 리뷰 (추교문) 10
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/55c51a60daf14a27b5e84a1e50cf5e48/original/image.png)
+이미지 딥러닝 (훈련): 클래스별 데이터 불균형 해소를 위한 가중치 적용 샘플링     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/1261c35862d946b98e9c01e29db44f55/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/58a06a0845274f2c9b8b6a500ce44610/original/image.png" alt="코드 이미지" width="400">
 
-### 4. 류성원 (Security/Auth)
-![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/3f35a44a807d41e2b30ee4a1c960f901/original/image.png)
-![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/b7f234f78f104547a422f873fa95b011/original/image.png)
-![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/48aae4e351094ce0ab45b8d8ebbcfaba/original/image.png)
-![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/044b6563e94d4963b5490df0fd99e2cd/original/image.png)
+이미지 딥러닝 (추론): 학습된 모델을 통해 음식 예측     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/33422a141abf4901b78696dd300cea19/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/36d2dbbac2c24737804a491dd967594a/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/a0f6ab6f85d344a080667e47c7993920/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/2734b896cf934003adacaf940d52dc8b/original/image.png" alt="코드 이미지" width="400">
 
-* **SecurityConfig.java**: 진입, 연결, 필터 배치
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/543ec8f0fe0f48068f2cd3a4a85209a9/original/image.png)
-* **공급자 응답 표준화**: DB 연동 및 `nameKey` 처리
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/2ac3ea940e684a88a636ec4549d21358/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/582c474bb9cb42eea51d68c65fac5f9b/original/image.png)
-* **링크 존재 시 즉시 반환 / 신규 생성**: 신규/기존 소셜 로그인 사용자 처리
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/0763be5fa74f4fdc801ab355a46607bc/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/8721c443ade340e0a0621460bfd1f02b/original/image.png)
-* **OAuth2LoginSuccessHandler.java**: JWT 발급 및 리다이렉트
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/f28bd7f26fca45d2bbab97ae2a9e0b7b/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/b08eb6fec89a467296c528249fc4f9f0/original/image.png)
-* **JwtAuthenticationFilter.java**: 토큰 파싱, 검증, 주입
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/676998b7539e421d92de7d2dc5a31a26/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/57c6c08413a84516b1a10a49e9c5e4c3/original/image.png)
-* **리다이렉트 문제 해결**
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/8aa8bbec04be4dc79ebb0bde30e217ef/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/2e2e9cf98066445493d8b2216e996802/original/image.png)
-* **소셜 로그인 프로필 이미지 업데이트 해결**
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/96b52ce3c1c94e2c8ef733ac7b709fe1/original/image.png)
-    ![코드 이미지](https://cdn.gamma.app/a86k0eon9iurvq4/6a36e2e99e0e4447aba6cb706e72e220/original/image.png)
+Flask: Flask와 PyTorch를 사용해 이미지 분석 결과를 JSON으로 반환하는 API 서버 구축     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/e1319db6b94748cbad0ef948c5522d6a/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/66de7f681f7344d9aab0389f13e15ad6/original/image.png" alt="코드 이미지" width="400">
+
+Flutter: JSON 데이터를 AnalysisResult 객체로 변환     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/b4f0c499421e4df4b963a014926acc3f/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/cf89162d92af4e19825903e91ffc521b/original/image.png" alt="코드 이미지" width="400">
+
+2. 김무진 (Maps API/Client)
+이미지 크롤링:     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/8a7f061996474fbfae20653d89235fc9/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/ed4f76b5bc444370a5d57443b0c058aa/original/image.png" alt="코드 이미지" width="400">
+
+이미지 전처리:     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/55ce1d6b05444d708c5f5bda9b44cff4/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/b1c8c412048c4ed2a339d5098af12ed5/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/6f829e0756b24a719226915db57c9bdf/original/image.png" alt="코드 이미지" width="400">
+
+Backend Controller: (foodName), (latitude), (longitude) 매개변수를 추출하여 Service로 전달     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/918fb885c4884ba3b5eb01ad0cf788f7/original/image.png" alt="코드 이미지" width="400">
+
+Backend Service: @Value로 API 키를 불러와 외부 API 통신 후 Controller에 결과 반환     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/35d4a901c71848e3b5e35b3094ffd830/original/image.png" alt="코드 이미지" width="400">
+
+분석 결과 식당 지도: 분석 완료 후 해당 음식 이름으로 주변 식당 자동 검색 및 지도 표시 (내 위치: 파란색, 맛집: 빨간색 마커)     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/c8f87db1dfa9451fb067694e1cf7a257/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/1126ebceb7c24111b69aa2cb42fba4e3/original/image.png" alt="코드 이미지" width="400">
+
+직접 검색 입력 지도: 사용자가 입력한 키워드 기반으로 백엔드 API 호출     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/a705ddaf1d8242bc96cb6ae250b98d27/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/ebc5dd9b385147f2ae172e6bd64e4386/original/image.png" alt="코드 이미지" width="400">
+
+Google API 설정: API 키 제한 설정 (제한 안함 X, 필요 API 직접 설정 O)     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/806898d2ce0d456fac3acd7510977ad2/original/image.png" alt="코드 이미지" width="400">
+
+에뮬레이터 좌표 설정: 에뮬레이터에서 특정 위치 좌표 설정 방법     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/ab572df560184abfa43ac9712e635e2e/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/21bfa361e4424ed18c5114e3b543712c/original/image.png" alt="코드 이미지" width="400">
+
+3. 추교문 (DB/Backend)
+코드 리뷰 (추교문) 1     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/79bf672aae3845ac8380246ea81c44b7/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 2     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/7707d761333f45ad861aeb5ad05cfa7a/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 3      <img src="https://cdn.gamma.app/a86k0eon9iurvq4/4f93a5da03184601aa635e1837fc10b0/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 4     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/858bf284db724dad82e05b5bc087258d/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 5     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/dce0ed322d6742b28563ffba846b96e6/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 6     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/352fce89e0404406b3de3d1807f0bd42/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 7     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/14ecb346b9f2475d8f79f4b114d4da47/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 8     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/92d9f7c9130345b19be1c8bc366b1140/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 9     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/b6acf3dd86584abab369112922ec8258/original/image.png" alt="코드 이미지" width="400">
+
+코드 리뷰 (추교문) 10     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/55c51a60daf14a27b5e84a1e50cf5e48/original/image.png" alt="코드 이미지" width="400">
+
+4. 류성원 (Security/Auth)
+<img src="https://cdn.gamma.app/a86k0eon9iurvq4/3f35a44a807d41e2b30ee4a1c960f901/original/image.png" alt="코드 이미지" width="400"> <img src="https://cdn.gamma.app/a86k0eon9iurvq4/b7f234f78f104547a422f873fa95b011/original/image.png" alt="코드 이미지" width="400"> <img src="https://cdn.gamma.app/a86k0eon9iurvq4/48aae4e351094ce0ab45b8d8ebbcfaba/original/image.png" alt="코드 이미지" width="400"> <img src="https://cdn.gamma.app/a86k0eon9iurvq4/044b6563e94d4963b5490df0fd99e2cd/original/image.png" alt="코드 이미지" width="400">
+
+SecurityConfig.java: 진입, 연결, 필터 배치     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/543ec8f0fe0f48068f2cd3a4a85209a9/original/image.png" alt="코드 이미지" width="400">
+
+공급자 응답 표준화: DB 연동 및 nameKey 처리     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/2ac3ea940e684a88a636ec4549d21358/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/582c474bb9cb42eea51d68c65fac5f9b/original/image.png" alt="코드 이미지" width="400">
+
+링크 존재 시 즉시 반환 / 신규 생성: 신규/기존 소셜 로그인 사용자 처리     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/0763be5fa74f4fdc801ab355a46607bc/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/8721c443ade340e0a0621460bfd1f02b/original/image.png" alt="코드 이미지" width="400">
+
+OAuth2LoginSuccessHandler.java: JWT 발급 및 리다이렉트     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/f28bd7f26fca45d2bbab97ae2a9e0b7b/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/b08eb6fec89a467296c528249fc4f9f0/original/image.png" alt="코드 이미지" width="400">
+
+JwtAuthenticationFilter.java: 토큰 파싱, 검증, 주입     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/676998b7539e421d92de7d2dc5a31a26/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/57c6c08413a84516b1a10a49e9c5e4c3/original/image.png" alt="코드 이미지" width="400">
+
+리다이렉트 문제 해결     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/8aa8bbec04be4dc79ebb0bde30e217ef/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/2e2e9cf98066445493d8b2216e996802/original/image.png" alt="코드 이미지" width="400">
+
+소셜 로그인 프로필 이미지 업데이트 해결     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/96b52ce3c1c94e2c8ef733ac7b709fe1/original/image.png" alt="코드 이미지" width="400">     <img src="https://cdn.gamma.app/a86k0eon9iurvq4/6a36e2e99e0e4447aba6cb706e72e220/original/image.png" alt="코드 이미지" width="400">
 
